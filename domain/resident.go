@@ -16,7 +16,7 @@ type Resident struct {
 	Name     string     `json:"name"`
 	Age      int        `json:"age"`
 	Gender   Gender     `json:"gender"`
-	Traits   []Trait    `json:"traints"`
+	Traits   []Trait    `json:"traits"`
 	Mood     Mood       `json:"mood"`
 	Memories []Memory   `json:"memories"`
 }
@@ -42,7 +42,7 @@ func (m Memory) String() string {
 	return fmt.Sprintf("%s: %s", m.OccuredAt, m.Content)
 }
 
-func NewResident(name string, age int, gender Gender, traints []Trait) (*Resident, error) {
+func NewResident(name string, age int, gender Gender, traits []Trait) (*Resident, error) {
 	if name == "" {
 		// のちに適当なdomain errorを定義して返すべき
 		return nil, errors.New("name is required")
@@ -53,7 +53,7 @@ func NewResident(name string, age int, gender Gender, traints []Trait) (*Residen
 	if gender < Unspecified || gender > Female {
 		return nil, errors.New("invalid gender")
 	}
-	if len(traints) == 0 {
+	if len(traits) == 0 {
 		return nil, errors.New("at least one trait is required")
 	}
 
@@ -63,7 +63,7 @@ func NewResident(name string, age int, gender Gender, traints []Trait) (*Residen
 		Name:   name,
 		Age:    age,
 		Gender: gender,
-		Traits: traints,
+		Traits: traits,
 	}, nil
 }
 
