@@ -22,7 +22,7 @@ func newResidentAgent(base *agentBase, resident *domain.Resident) *residentAgent
 	base.id = id(resident.ID)
 	base.name = name(resident.Name)
 	//
-	base.llmPrompt.AddSystemPromt(``)
+	base.llmPrompt.AddSystemPrompt(``)
 	return &residentAgent{
 		agentBase: base,
 		resident:  resident,
@@ -72,12 +72,12 @@ func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent messa
 	msg := msgEvent.payroad()
 
 	systemPrompt := ``
-	userPromtTemplate := ``
+	userPromptTemplate := ``
 
-	userPrompt := fmt.Sprintf(userPromtTemplate, msg)
+	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
 
-	ra.llmPrompt.AddSystemPromt(systemPrompt)
-	ra.llmPrompt.AddUserPromt(userPrompt)
+	ra.llmPrompt.AddSystemPrompt(systemPrompt)
+	ra.llmPrompt.AddUserPrompt(userPrompt)
 
 	res, err := domain.CallLLM(ctx, ra.llmProvider, ra.llmPrompt, residentLLMResponseSchema, parseResidentLLMResponse)
 	if err != nil {

@@ -25,13 +25,13 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 
 
 	`
-	userPromtTemplate := `
+	userPromptTemplate := `
 
 	`
-	userPrompt := fmt.Sprintf(userPromtTemplate, personalityDescription)
+	userPrompt := fmt.Sprintf(userPromptTemplate, personalityDescription)
 	var llmPrompt domain.LLMPrompts
-	llmPrompt.AddSystemPromt(systemPrompt)
-	llmPrompt.AddUserPromt(userPrompt)
+	llmPrompt.AddSystemPrompt(systemPrompt)
+	llmPrompt.AddUserPrompt(userPrompt)
 
 	traits, err := domain.CallLLM(ctx, r.llmProvider, &llmPrompt, "", parseTraits)
 	if err != nil {

@@ -11,10 +11,10 @@ type LLMPrompts struct {
 	User   strings.Builder
 }
 
-func (l *LLMPrompts) AddSystemPromt(new string) {
+func (l *LLMPrompts) AddSystemPrompt(new string) {
 	l.System.WriteString(new + "\n")
 }
-func (l *LLMPrompts) AddUserPromt(new string) {
+func (l *LLMPrompts) AddUserPrompt(new string) {
 	l.User.WriteString(new + "\n")
 }
 
