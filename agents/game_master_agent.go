@@ -1,5 +1,5 @@
 package agents
 
-type gameMasgterAgent struct {
+type gameMasterAgent struct {
 	*agentBase
 }

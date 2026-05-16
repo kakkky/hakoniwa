@@ -7,7 +7,7 @@ import (
 )
 
 type Runtime struct {
-	gameMasterAgent     *gameMasgterAgent
+	gameMasterAgent     *gameMasterAgent
 	residentAgentsState residentAgentsState
 
 	commandSubscriber commandSubscriber
