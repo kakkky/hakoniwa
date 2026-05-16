@@ -11,7 +11,7 @@ import (
 	"github.com/kakkky/hakoniwa/domain"
 )
 
-const maxMeomryInLLMContext = 50
+const maxMemoryInLLMContext = 50
 
 type residentAgent struct {
 	*agentBase
@@ -44,8 +44,8 @@ func (ra *residentAgent) run(ctx context.Context) error {
 
 func (ra *residentAgent) processEvent(ctx context.Context, event agentEvent) error {
 	memories := ra.resident.Memories
-	if len(memories) > maxMeomryInLLMContext {
-		memories = memories[len(memories)-maxMeomryInLLMContext:]
+	if len(memories) > maxMemoryInLLMContext {
+		memories = memories[len(memories)-maxMemoryInLLMContext:]
 	}
 	var llmContext strings.Builder
 	for _, memory := range memories {
