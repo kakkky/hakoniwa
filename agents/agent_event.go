@@ -3,7 +3,7 @@ package agents
 type agentEvent interface {
 	to() (id, name)
 	from() (id, name)
-	payroad() string
+	payload() string
 }
 
 type eventBase struct {
@@ -26,7 +26,7 @@ type messageEvent struct {
 	message string
 }
 
-func (me messageEvent) payroad() string {
+func (me messageEvent) payload() string {
 	return me.message
 }
 
@@ -35,6 +35,6 @@ type opportunityEvent struct {
 	opportunity string
 }
 
-func (oe opportunityEvent) payroad() string {
+func (oe opportunityEvent) payload() string {
 	return oe.opportunity
 }

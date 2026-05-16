@@ -69,7 +69,7 @@ func (ra *residentAgent) processEvent(ctx context.Context, event agentEvent) err
 }
 
 func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent messageEvent, llmContext strings.Builder) error {
-	msg := msgEvent.payroad()
+	msg := msgEvent.payload()
 
 	systemPrompt := ``
 	userPromptTemplate := ``
