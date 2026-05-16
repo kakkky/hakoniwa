@@ -3,7 +3,7 @@
   "properties": {
     "action": {
       "type": "string",
-      "enum": ["message", "oppotunity", "stay"]
+      "enum": ["message", "opportunity", "stay"]
     },
     "to": {
       "type": "string"

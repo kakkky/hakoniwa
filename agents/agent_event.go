@@ -30,11 +30,11 @@ func (me messageEvent) payroad() string {
 	return me.message
 }
 
-type oppotunityEvent struct {
+type opportunityEvent struct {
 	eventBase
-	oppotunity string
+	opportunity string
 }
 
-func (oe oppotunityEvent) payroad() string {
-	return oe.oppotunity
+func (oe opportunityEvent) payroad() string {
+	return oe.opportunity
 }

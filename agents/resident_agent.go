@@ -61,7 +61,7 @@ func (ra *residentAgent) processEvent(ctx context.Context, event agentEvent) err
 		}
 		ra.resident.AddMemory(newMemory)
 		return ra.processMessageEvent(ctx, eventV, llmContext)
-	case oppotunityEvent:
+	case opportunityEvent:
 		_ = eventV
 	}
 
@@ -106,13 +106,13 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) {
 			message: res.Payload,
 		}
 		ra.sendEvent(event)
-	case ResidentActionOppotunity:
-		event := &oppotunityEvent{
+	case ResidentActionOpportunity:
+		event := &opportunityEvent{
 			eventBase: eventBase{
 				toID:   id(res.To),
 				fromID: id(ra.id),
 			},
-			oppotunity: res.Payload,
+			opportunity: res.Payload,
 		}
 		ra.sendEvent(event)
 	case ResidentActionStay:
@@ -127,7 +127,7 @@ type ResidentActionKind string
 
 const (
 	ResidentActionMessage    ResidentActionKind = "message"
-	ResidentActionOppotunity ResidentActionKind = "oppotunity"
+	ResidentActionOpportunity ResidentActionKind = "opportunity"
 	ResidentActionStay       ResidentActionKind = "stay"
 )
 
