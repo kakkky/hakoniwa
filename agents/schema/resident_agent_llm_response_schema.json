@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["message", "oppotunity", "stay"]
+    },
+    "to": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "string"
+    },
+    "state_update": {
+      "type": "object",
+      "properties": {
+        "mood": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["action"]
+}

@@ -29,7 +29,7 @@ func (repo *FileResidentRepository) Save(resident *domain.Resident) error {
 	if err := json.Unmarshal(data, &residents); err != nil {
 		return err
 	}
-	residentsMap := make(map[string]*domain.Resident, len(residents))
+	residentsMap := make(map[domain.ResidentID]*domain.Resident, len(residents))
 	for _, r := range residents {
 		residentsMap[r.ID] = r
 	}
@@ -49,4 +49,12 @@ func (repo *FileResidentRepository) Save(resident *domain.Resident) error {
 		return err
 	}
 	return nil
+}
+
+func (repo *FileResidentRepository) SaveAll(residents []*domain.Resident) error {
+	data, err := json.Marshal(residents)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(repo.filePath, data, 0o64)
 }

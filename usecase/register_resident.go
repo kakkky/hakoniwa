@@ -29,12 +29,14 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 
 	`
 	userPrompt := fmt.Sprintf(userPromtTemplate, personalityDescription)
+	var llmPrompt domain.LLMPrompts
+	llmPrompt.AddSystemPromt(systemPrompt)
+	llmPrompt.AddUserPromt(userPrompt)
 
-	response, err := r.llmProvider.Generate(ctx, domain.Prompts{System: systemPrompt, User: userPrompt})
+	traits, err := domain.CallLLM(ctx, r.llmProvider, &llmPrompt, "", parseTraits)
 	if err != nil {
 		return fmt.Errorf("failed to generate traits: %w", err)
 	}
-	traits := parseTraits(string(response))
 
 	resident, err := domain.NewResident(name, age, gender, traits)
 	if err != nil {
@@ -48,11 +50,11 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 	return nil
 }
 
-func parseTraits(rawTraits string) []domain.Trait {
-	rawTraitSlice := strings.Split(rawTraits, ",")
+func parseTraits(raw domain.LLMResponse) ([]domain.Trait, error) {
+	rawTraitSlice := strings.Split(string(raw), ",")
 	traits := make([]domain.Trait, len(rawTraitSlice))
 	for i, rawTrait := range rawTraitSlice {
 		traits[i] = domain.Trait(strings.TrimSpace(rawTrait))
 	}
-	return traits
+	return traits, nil
 }

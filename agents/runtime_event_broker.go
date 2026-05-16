@@ -1,26 +1,41 @@
 package agents
 
+import "context"
+
+type agentEventInbox chan agentEvent
+
+type brokerEventInbox = agentEventInbox
+
 type eventBroker struct {
-	inbox  eventInbox
-	routes map[ID]eventInbox
+	inbox  brokerEventInbox
+	routes map[id]agentEventInbox
 }
 
 func newEventBroker() *eventBroker {
-	return &eventBroker{}
+	inbox := make(chan agentEvent, 32)
+	routes := make(map[id]agentEventInbox)
+	return &eventBroker{
+		inbox:  inbox,
+		routes: routes,
+	}
 }
 
-func (e *eventBroker) run() error {
-	return nil
+func (e *eventBroker) run(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case event := <-e.inbox:
+			e.dispatch(event)
+		}
+	}
 }
 
-func (e *eventBroker) registerRoutes(id ID, inbox eventInbox) error {
-	return nil
+func (e *eventBroker) registerRoutes(id id, inbox agentEventInbox) {
+	e.routes[id] = inbox
 }
 
-func (e *eventBroker) dispatchMessage(msg message) error {
-	return nil
-}
-
-func (e *eventBroker) dispatchOppotunity(op oppotunity) error {
-	return nil
+func (e *eventBroker) dispatch(event agentEvent) {
+	to := e.routes[event.to()]
+	to <- event
 }
