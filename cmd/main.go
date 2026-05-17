@@ -13,7 +13,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app, err := InitializeApp(cfg)
+	application, err := initializeApp(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,12 +21,12 @@ func main() {
 	ctx := context.Background()
 
 	// agents起動
-	if err := app.Runtime.Run(ctx); err != nil {
+	if err := application.Runtime.Run(ctx); err != nil {
 		log.Fatal(err)
 	}
 
 	// presentation層追加後にUIを起動
-	// if err := app.UI.Run(ctx); err != nil {
+	// if err := application.UI.Run(ctx); err != nil {
 	// 	log.Fatal(err)
 	// }
 }

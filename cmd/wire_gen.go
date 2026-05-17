@@ -8,18 +8,17 @@ package main
 
 import (
 	"github.com/kakkky/hakoniwa/agents"
-	"github.com/kakkky/hakoniwa/app"
 	"github.com/kakkky/hakoniwa/config"
 	"github.com/kakkky/hakoniwa/infrastructure/llm"
 )
 
 // Injectors from wire.go:
 
-func InitializeApp(cfg *config.Config) (*app.App, error) {
+func initializeApp(cfg *config.Config) (*App, error) {
 	llmProvider := llm.NewLLMGeminiProvider()
 	runtime := agents.NewRuntime(llmProvider)
-	appApp := &app.App{
+	app := &App{
 		Runtime: runtime,
 	}
-	return appApp, nil
+	return app, nil
 }
