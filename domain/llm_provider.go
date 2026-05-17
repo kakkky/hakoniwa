@@ -21,7 +21,7 @@ func (l *LLMPrompts) AddUserPrompt(new string) {
 type LLMResponse string
 
 type LLMProvider interface {
-	Generate(ctx context.Context, prompts *LLMPrompts, schema string) (LLMResponse, error)
+	Generate(ctx context.Context, prompts *LLMPrompts) (LLMResponse, error)
 }
 
 func CallLLM[RES any](
@@ -32,7 +32,7 @@ func CallLLM[RES any](
 	parse func(LLMResponse) (RES, error),
 ) (RES, error) {
 	var zero RES
-	raw, err := p.Generate(ctx, prompts, schema)
+	raw, err := p.Generate(ctx, prompts)
 	if err != nil {
 		return zero, err
 	}

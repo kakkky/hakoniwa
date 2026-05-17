@@ -12,6 +12,6 @@ func NewLLMGeminiProvider() domain.LLMProvider {
 	return &LLMGeminiProvider{}
 }
 
-func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, schema string) (domain.LLMResponse, error) {
+func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts) (domain.LLMResponse, error) {
 	panic("not implemented")
 }
