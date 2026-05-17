@@ -1,19 +1,19 @@
-package presentation
+package tui
 
 import (
 	"github.com/kakkky/hakoniwa/usecase"
 )
 
-type TextUserInterface struct {
+type TUI struct {
 	registerResident *usecase.RegisterResident
 	sendMessage      *usecase.SendMessageFromBuildingManagerToResident
 }
 
-func NewTextUserInterface(
+func NewTUI(
 	registerResident *usecase.RegisterResident,
 	sendMessage *usecase.SendMessageFromBuildingManagerToResident,
-) *TextUserInterface {
-	return &TextUserInterface{
+) *TUI {
+	return &TUI{
 		registerResident: registerResident,
 		sendMessage:      sendMessage,
 	}
