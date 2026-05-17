@@ -15,8 +15,9 @@ const (
 )
 
 const (
-	ResidentsFileName = "residents.json"
-	LogFileName       = "hakoniwa.log"
+	ResidentsFileName       = "residents.json"
+	BuildingManagerFileName = "building_manager.json"
+	LogFileName             = "hakoniwa.log"
 )
 
 const (
@@ -30,7 +31,8 @@ type FilePaths struct {
 }
 
 type DataFilePaths struct {
-	ResidentsFilePath string
+	ResidentsFilePath       string
+	BuildingManagerFilePath string
 }
 
 func NewFilePaths(cfg *config.Config) (*FilePaths, error) {
@@ -46,9 +48,10 @@ func NewFilePaths(cfg *config.Config) (*FilePaths, error) {
 	}
 
 	residentsFilePath := filepath.Join(dataDir, ResidentsFileName)
+	buildingManagerFilePath := filepath.Join(dataDir, BuildingManagerFileName)
 	logFilePath := filepath.Join(stateDir, LogFileName)
 
-	for _, p := range []string{residentsFilePath, logFilePath} {
+	for _, p := range []string{residentsFilePath, buildingManagerFilePath, logFilePath} {
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY, fileMode)
 		if err != nil {
 			return nil, err
@@ -60,7 +63,8 @@ func NewFilePaths(cfg *config.Config) (*FilePaths, error) {
 
 	return &FilePaths{
 		DataFilePaths: DataFilePaths{
-			ResidentsFilePath: residentsFilePath,
+			ResidentsFilePath:       residentsFilePath,
+			BuildingManagerFilePath: buildingManagerFilePath,
 		},
 		LogFilePath: logFilePath,
 	}, nil

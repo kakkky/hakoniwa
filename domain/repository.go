@@ -7,3 +7,8 @@ type ResidentRepository interface {
 	// FindByID(id string) (*Resident, error)
 	// DeleteByID(id string) error
 }
+
+type BuildingManagerRepository interface {
+	Save(BuildingManager *BuildingManager) error
+	Get() (BuildingManager, error)
+}
