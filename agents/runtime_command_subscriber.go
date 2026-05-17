@@ -27,6 +27,9 @@ func (ar *commandSubscriber) run(ctx context.Context) error {
 			switch cmdV := cmd.(type) {
 			case domain.AddResidentAgentCommand:
 				ar.runtime.addResidentAgent(&cmdV.Resident)
+				// 後続コマンド (e.g. PublishEventCommand) が届くまでに
+				// route 登録を完了させるため、ここで reconcile を同期実行する
+				ar.runtime.reconcileResidentAgents(ctx)
 			case domain.PublishEventCommand:
 				ar.runtime.eventBroker.inbox <- cmdV.Event
 			}
