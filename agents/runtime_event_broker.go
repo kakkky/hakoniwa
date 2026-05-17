@@ -1,19 +1,23 @@
 package agents
 
-import "context"
+import (
+	"context"
 
-type agentEventInbox chan agentEvent
+	"github.com/kakkky/hakoniwa/domain"
+)
+
+type agentEventInbox chan domain.Event
 
 type brokerEventInbox = agentEventInbox
 
 type eventBroker struct {
 	inbox  brokerEventInbox
-	routes map[id]agentEventInbox
+	routes map[domain.ResidentID]agentEventInbox
 }
 
 func newEventBroker() *eventBroker {
-	inbox := make(chan agentEvent, 32)
-	routes := make(map[id]agentEventInbox)
+	inbox := make(chan domain.Event, 32)
+	routes := make(map[domain.ResidentID]agentEventInbox)
 	return &eventBroker{
 		inbox:  inbox,
 		routes: routes,
@@ -31,11 +35,11 @@ func (e *eventBroker) run(ctx context.Context) error {
 	}
 }
 
-func (e *eventBroker) registerRoutes(id id, inbox agentEventInbox) {
+func (e *eventBroker) registerRoutes(id domain.ResidentID, inbox agentEventInbox) {
 	e.routes[id] = inbox
 }
 
-func (e *eventBroker) dispatch(event agentEvent) {
-	to := e.routes[event.to()]
+func (e *eventBroker) dispatch(event domain.Event) {
+	to := e.routes[event.To().ID]
 	to <- event
 }

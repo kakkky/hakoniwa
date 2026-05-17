@@ -10,15 +10,16 @@ import (
 )
 
 type ResidentID string
+type ResidentName string
 
 type Resident struct {
-	ID       ResidentID `json:"id"`
-	Name     string     `json:"name"`
-	Age      int        `json:"age"`
-	Gender   Gender     `json:"gender"`
-	Traits   []Trait    `json:"traits"`
-	Mood     Mood       `json:"mood"`
-	Memories []Memory   `json:"memories"`
+	ID       ResidentID   `json:"id"`
+	Name     ResidentName `json:"name"`
+	Age      int          `json:"age"`
+	Gender   Gender       `json:"gender"`
+	Traits   []Trait      `json:"traits"`
+	Mood     Mood         `json:"mood"`
+	Memories []Memory     `json:"memories"`
 }
 
 type Gender int
@@ -60,7 +61,7 @@ func NewResident(name string, age int, gender Gender, traits []Trait) (*Resident
 	id := ulid.Make().String()
 	return &Resident{
 		ID:     ResidentID(id),
-		Name:   name,
+		Name:   ResidentName(name),
 		Age:    age,
 		Gender: gender,
 		Traits: traits,

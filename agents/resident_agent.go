@@ -19,10 +19,9 @@ type residentAgent struct {
 }
 
 func newResidentAgent(base *agentBase, resident *domain.Resident) *residentAgent {
-	base.id = id(resident.ID)
-	base.name = name(resident.Name)
-	//
-	base.llmPrompt.AddSystemPrompt(``)
+	systemPromptTemplate := `レスポンスは以下のJSONスキーマの文字列で行うようにしてください。：%s`
+	systemPrompt := fmt.Sprintf(systemPromptTemplate, residentLLMResponseSchema)
+	base.llmPrompt.AddSystemPrompt(systemPrompt)
 	return &residentAgent{
 		agentBase: base,
 		resident:  resident,
@@ -42,7 +41,7 @@ func (ra *residentAgent) run(ctx context.Context) error {
 	}
 }
 
-func (ra *residentAgent) processEvent(ctx context.Context, event agentEvent) error {
+func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) error {
 	memories := ra.resident.Memories
 	if len(memories) > maxMemoryInLLMContext {
 		memories = memories[len(memories)-maxMemoryInLLMContext:]
@@ -53,25 +52,26 @@ func (ra *residentAgent) processEvent(ctx context.Context, event agentEvent) err
 	}
 
 	switch eventV := event.(type) {
-	case messageEvent:
-		newMemoryContent := fmt.Sprintf(`%sから「%s」とメッセージを受け取った。`, "agent_name", eventV.message)
+	case domain.MessageEvent:
+		newMemoryContent := fmt.Sprintf(`%sから「%s」とメッセージを受け取った。`, eventV.EventFrom.Name, eventV.Message)
 		newMemory := domain.Memory{
 			Content:   newMemoryContent,
 			OccuredAt: time.Now(),
 		}
 		ra.resident.AddMemory(newMemory)
 		return ra.processMessageEvent(ctx, eventV, llmContext)
-	case opportunityEvent:
+	case domain.OpportunityEvent:
 		_ = eventV
 	}
 
 	return nil
 }
 
-func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent messageEvent, llmContext strings.Builder) error {
-	msg := msgEvent.payload()
+func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domain.MessageEvent, llmContext strings.Builder) error {
+	msg := msgEvent.Payload()
 
-	systemPrompt := ``
+	systemPromptTemplate := ``
+	systemPrompt := fmt.Sprintf(systemPromptTemplate, nil)
 	userPromptTemplate := ``
 
 	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
@@ -98,23 +98,27 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) {
 	action := res.Action
 	switch action {
 	case ResidentActionMessage:
-		event := &messageEvent{
-			eventBase: eventBase{
-				toID:   id(res.To),
-				fromID: id(ra.id),
+		ra.sendEvent(domain.MessageEvent{
+			EventBase: domain.EventBase{
+				EventTo: domain.EventTo{ID: res.To},
+				EventFrom: domain.EventFrom{
+					ID:   domain.ActorID(ra.resident.ID),
+					Name: domain.ActorName(ra.resident.Name),
+				},
 			},
-			message: res.Payload,
-		}
-		ra.sendEvent(event)
+			Message: res.Payload,
+		})
 	case ResidentActionOpportunity:
-		event := &opportunityEvent{
-			eventBase: eventBase{
-				toID:   id(res.To),
-				fromID: id(ra.id),
+		ra.sendEvent(domain.OpportunityEvent{
+			EventBase: domain.EventBase{
+				EventTo: domain.EventTo{ID: res.To},
+				EventFrom: domain.EventFrom{
+					ID:   domain.ActorID(ra.resident.ID),
+					Name: domain.ActorName(ra.resident.Name),
+				},
 			},
-			opportunity: res.Payload,
-		}
-		ra.sendEvent(event)
+			Opportunity: res.Payload,
+		})
 	case ResidentActionStay:
 		return
 	}
@@ -126,9 +130,9 @@ var residentLLMResponseSchema string
 type ResidentActionKind string
 
 const (
-	ResidentActionMessage    ResidentActionKind = "message"
+	ResidentActionMessage     ResidentActionKind = "message"
 	ResidentActionOpportunity ResidentActionKind = "opportunity"
-	ResidentActionStay       ResidentActionKind = "stay"
+	ResidentActionStay        ResidentActionKind = "stay"
 )
 
 type residentLLMResponse struct {

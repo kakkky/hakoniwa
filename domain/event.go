@@ -1,42 +1,52 @@
 package domain
 
-import "time"
+// ActorID はイベントの送受信主体 (住人 / 管理人 等) を識別する ID
+type ActorID string
+
+// ActorName はイベントの送受信主体 (住人 / 管理人 等) の表示名
+type ActorName string
+
+const (
+	BuildManagerActorID   ActorID   = "manager"
+	BuoldManagerActorName ActorName = "管理人"
+	GameMasterActorID     ActorID   = "game_master"
+	GameMasterActorName   ActorName = "ゲームマスター"
+)
 
 type Event interface {
-	_isEvent()
+	To() EventTo
+	From() EventFrom
+	Payload() string
 }
 
-type EventInbox chan Event
-
-// WorldEvent: 世界全体の出来事 (Tick由来など)
-type WorldEvent struct {
-	Content    string
-	OccurredAt time.Time
+type EventBase struct {
+	EventTo   EventTo
+	EventFrom EventFrom
 }
 
-func (WorldEvent) _isEvent() {}
-
-func NewWorldEvent(content string, now time.Time) WorldEvent {
-	return WorldEvent{Content: content, OccurredAt: now}
+type EventTo struct {
+	ID   ResidentID
+	Name ResidentName
 }
 
-func NewTickMorningEvent(now time.Time) WorldEvent {
-	return NewWorldEvent("世界は朝になった", now)
+type EventFrom struct {
+	ID   ActorID
+	Name ActorName
 }
 
-func NewTickNightEvent(now time.Time) WorldEvent {
-	return NewWorldEvent("世界は夜になった", now)
+func (eb EventBase) To() EventTo     { return eb.EventTo }
+func (eb EventBase) From() EventFrom { return eb.EventFrom }
+
+type MessageEvent struct {
+	EventBase
+	Message string
 }
 
-// ResidentEvent: 個別residentの出来事
-type ResidentEvent struct {
-	ResidentID ResidentID
-	Content    string
-	OccurredAt time.Time
+func (me MessageEvent) Payload() string { return me.Message }
+
+type OpportunityEvent struct {
+	EventBase
+	Opportunity string
 }
 
-func (ResidentEvent) _isEvent() {}
-
-func NewResidentEvent(id ResidentID, content string, now time.Time) ResidentEvent {
-	return ResidentEvent{ResidentID: id, Content: content, OccurredAt: now}
-}
+func (oe OpportunityEvent) Payload() string { return oe.Opportunity }

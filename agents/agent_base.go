@@ -4,24 +4,18 @@ import (
 	"github.com/kakkky/hakoniwa/domain"
 )
 
-type id string
-
-type name string
-
 type agentBase struct {
-	id          id
-	name        name
 	inbox       agentEventInbox
-	sendEvent   func(agentEvent)
+	sendEvent   func(domain.Event)
 	llmProvider domain.LLMProvider
 	llmPrompt   *domain.LLMPrompts
 }
 
 func newAgentBase(
-	sendEvent func(agentEvent),
+	sendEvent func(domain.Event),
 	llmProvider domain.LLMProvider,
 ) *agentBase {
-	inbox := make(chan agentEvent, 16)
+	inbox := make(chan domain.Event, 16)
 	return &agentBase{
 		inbox:       inbox,
 		sendEvent:   sendEvent,
