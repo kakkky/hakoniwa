@@ -2,6 +2,7 @@ package agents
 
 import (
 	"context"
+	"sync"
 
 	"github.com/kakkky/hakoniwa/domain"
 )
@@ -11,8 +12,9 @@ type agentEventInbox chan domain.Event
 type brokerEventInbox = agentEventInbox
 
 type eventBroker struct {
-	inbox  brokerEventInbox
-	routes map[domain.ResidentID]agentEventInbox
+	inbox    brokerEventInbox
+	routesMu sync.RWMutex
+	routes   map[domain.ResidentID]agentEventInbox
 }
 
 func newEventBroker() *eventBroker {
@@ -36,10 +38,17 @@ func (e *eventBroker) run(ctx context.Context) error {
 }
 
 func (e *eventBroker) registerRoutes(id domain.ResidentID, inbox agentEventInbox) {
+	e.routesMu.Lock()
+	defer e.routesMu.Unlock()
 	e.routes[id] = inbox
 }
 
 func (e *eventBroker) dispatch(event domain.Event) {
-	to := e.routes[event.To().ID]
+	e.routesMu.RLock()
+	to, ok := e.routes[event.To().ID]
+	e.routesMu.RUnlock()
+	if !ok {
+		return
+	}
 	to <- event
 }

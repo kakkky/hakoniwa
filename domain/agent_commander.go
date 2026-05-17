@@ -1,5 +1,7 @@
 package domain
 
+//go:generate mockgen -source=agent_commander.go -destination=mock/mock_agent_commander.go -package=mock
+
 import (
 	"context"
 )

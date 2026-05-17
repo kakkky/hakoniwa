@@ -13,9 +13,9 @@ type FileResidentRepository struct {
 
 var _ domain.ResidentRepository = (*FileResidentRepository)(nil)
 
-func NewFileResidentRepository(filePath string) *FileResidentRepository {
+func NewFileResidentRepository(paths *FilePaths) *FileResidentRepository {
 	return &FileResidentRepository{
-		filePath: filePath,
+		filePath: paths.DataFilePaths.ResidentsFilePath,
 	}
 }
 
@@ -56,5 +56,17 @@ func (repo *FileResidentRepository) SaveAll(residents []*domain.Resident) error 
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(repo.filePath, data, 0o64)
+	return os.WriteFile(repo.filePath, data, 0o644)
+}
+
+func (repo *FileResidentRepository) GetAll() ([]*domain.Resident, error) {
+	data, err := os.ReadFile(repo.filePath)
+	if err != nil {
+		return nil, err
+	}
+	var residents []*domain.Resident
+	if err := json.Unmarshal(data, &residents); err != nil {
+		return nil, err
+	}
+	return residents, nil
 }

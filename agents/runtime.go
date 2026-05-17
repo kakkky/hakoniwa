@@ -2,6 +2,7 @@ package agents
 
 import (
 	"context"
+	"sync"
 
 	"github.com/kakkky/hakoniwa/domain"
 )
@@ -19,6 +20,7 @@ type Runtime struct {
 }
 
 type residentAgentsState struct {
+	mu      sync.Mutex
 	desired []*residentAgent
 	running map[domain.ResidentID]context.CancelFunc
 }
@@ -65,6 +67,8 @@ func (r *Runtime) reconcileResidentAgentsLoop(ctx context.Context) {
 }
 
 func (r *Runtime) reconcileResidentAgents(ctx context.Context) {
+	r.residentAgentsState.mu.Lock()
+	defer r.residentAgentsState.mu.Unlock()
 	for _, desired := range r.residentAgentsState.desired {
 		if _, alreadyRunning := r.residentAgentsState.running[desired.resident.ID]; alreadyRunning {
 			continue
@@ -83,9 +87,11 @@ func (r *Runtime) reconcileResidentAgents(ctx context.Context) {
 }
 
 func (r *Runtime) addResidentAgent(resident *domain.Resident) {
+	r.residentAgentsState.mu.Lock()
 	r.residentAgentsState.desired = append(r.residentAgentsState.desired, &residentAgent{
 		resident: resident,
 	})
+	r.residentAgentsState.mu.Unlock()
 	select {
 	case r.reconcileSignal <- struct{}{}:
 	default:
