@@ -11,8 +11,8 @@ import (
 
 func TestNewFilePaths(t *testing.T) {
 	tests := []struct {
-		name        string
-		setup       func(t *testing.T) (cfg *config.Config, wantDataDir, wantStateDir string)
+		name  string
+		setup func(t *testing.T) (cfg *config.Config, wantDataDir, wantStateDir string)
 	}{
 		{
 			name: "XDG_DATA_HOME / XDG_STATE_HOME が指定されているとそこに作成される",

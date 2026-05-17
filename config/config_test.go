@@ -1,22 +1,10 @@
 package config_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/kakkky/hakoniwa/config"
 )
-
-// unsetEnv removes an env var for the duration of the test (restored on cleanup).
-// t.Setenv だけでは空文字を「設定済み」と扱われ required を弾けないため。
-func unsetEnv(t *testing.T, key string) {
-	t.Helper()
-	// t.Setenv はクリーンアップで元の値に戻してくれるので、まず一旦これで登録してから unset する
-	t.Setenv(key, "placeholder")
-	if err := os.Unsetenv(key); err != nil {
-		t.Fatalf("failed to unset %s: %v", key, err)
-	}
-}
 
 func TestNewConfig(t *testing.T) {
 	tests := []struct {
@@ -71,10 +59,8 @@ func TestNewConfig_Error(t *testing.T) {
 		setupEnv func(t *testing.T)
 	}{
 		{
-			name: "GEMINI_API_KEY が未設定ならエラー",
-			setupEnv: func(t *testing.T) {
-				unsetEnv(t, "GEMINI_API_KEY")
-			},
+			name:     "GEMINI_API_KEY が未設定ならエラー",
+			setupEnv: func(t *testing.T) {},
 		},
 	}
 
