@@ -6,7 +6,6 @@ package infrastructure
 import (
 	"github.com/google/wire"
 	"github.com/kakkky/hakoniwa/domain"
-	"github.com/kakkky/hakoniwa/infrastructure/agent"
 	"github.com/kakkky/hakoniwa/infrastructure/file"
 	"github.com/kakkky/hakoniwa/infrastructure/llm"
 )

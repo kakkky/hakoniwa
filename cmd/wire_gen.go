@@ -9,16 +9,46 @@ package main
 import (
 	"github.com/kakkky/hakoniwa/agents"
 	"github.com/kakkky/hakoniwa/config"
+	"github.com/kakkky/hakoniwa/domain"
+	"github.com/kakkky/hakoniwa/infrastructure/agent"
+	"github.com/kakkky/hakoniwa/infrastructure/file"
 	"github.com/kakkky/hakoniwa/infrastructure/llm"
+	"github.com/kakkky/hakoniwa/presentation"
+	"github.com/kakkky/hakoniwa/usecase"
 )
 
 // Injectors from wire.go:
 
-func initializeApp(cfg *config.Config) (*App, error) {
+func initializeApp() (*App, error) {
 	llmProvider := llm.NewLLMGeminiProvider()
 	runtime := agents.NewRuntime(llmProvider)
+	configConfig, err := config.NewConfig()
+	if err != nil {
+		return nil, err
+	}
+	filePaths, err := file.NewFilePaths(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	fileResidentRepository := file.NewFileResidentRepository(filePaths)
+	agentCommander := provideAgentCommander(runtime)
+	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommander)
+	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommander)
+	textUserInterface := presentation.NewTextUserInterface(registerResident, sendMessageFromBuildingManagerToResident)
 	app := &App{
-		Runtime: runtime,
+		AgentRuntime: runtime,
+		UI:           textUserInterface,
 	}
 	return app, nil
+}
+
+// wire.go:
+
+type App struct {
+	AgentRuntime *agents.Runtime
+	UI           *presentation.TextUserInterface
+}
+
+func provideAgentCommander(r *agents.Runtime) domain.AgentCommander {
+	return agent.NewAgentCommander(r.CommandInbox())
 }
