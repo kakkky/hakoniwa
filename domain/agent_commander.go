@@ -12,7 +12,15 @@ type AgentCommander interface {
 
 type AgentCommand interface {
 	_isAgentCommand()
+	CommandKey() AgentCommandKey
 }
+
+type AgentCommandKey string
+
+const (
+	PublishEvent     AgentCommandKey = "publish_event"
+	AddResidentAgent AgentCommandKey = "add_resident_agent"
+)
 
 type AgentCommandInbox chan AgentCommand
 
@@ -20,8 +28,16 @@ type PublishEventCommand struct {
 	Event Event
 }
 
+func (pe PublishEventCommand) CommandKey() AgentCommandKey {
+	return PublishEvent
+}
+
 type AddResidentAgentCommand struct {
 	Resident Resident // snapshotを丸ごと
+}
+
+func (ar AddResidentAgentCommand) CommandKey() AgentCommandKey {
+	return AddResidentAgent
 }
 
 func (AddResidentAgentCommand) _isAgentCommand() {}
