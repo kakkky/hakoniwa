@@ -9,4 +9,5 @@ import (
 
 var Set = wire.NewSet(
 	NewRuntime,
+	AgentCommandInbox,
 )

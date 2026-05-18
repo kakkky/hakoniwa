@@ -9,7 +9,6 @@ package main
 import (
 	"github.com/kakkky/hakoniwa/agents"
 	"github.com/kakkky/hakoniwa/config"
-	"github.com/kakkky/hakoniwa/domain"
 	"github.com/kakkky/hakoniwa/infrastructure/agent"
 	"github.com/kakkky/hakoniwa/infrastructure/file"
 	"github.com/kakkky/hakoniwa/infrastructure/llm"
@@ -31,7 +30,8 @@ func initializeApp() (*App, error) {
 		return nil, err
 	}
 	fileResidentRepository := file.NewFileResidentRepository(filePaths)
-	agentCommander := provideAgentCommander(runtime)
+	agentCommandInbox := agents.AgentCommandInbox(runtime)
+	agentCommander := agent.NewAgentCommander(agentCommandInbox)
 	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommander)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommander)
 	tuiTUI := tui.NewTUI(registerResident, sendMessageFromBuildingManagerToResident)
@@ -47,8 +47,4 @@ func initializeApp() (*App, error) {
 type App struct {
 	AgentRuntime *agents.Runtime
 	UI           *tui.TUI
-}
-
-func provideAgentCommander(r *agents.Runtime) domain.AgentCommander {
-	return agent.NewAgentCommander(r.CommandInbox())
 }
