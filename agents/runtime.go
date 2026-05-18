@@ -42,7 +42,8 @@ func NewRuntime(llmProvider domain.LLMProvider) *Runtime {
 		commandSubscriber,
 		domain.AddResidentAgentCommand{},
 		func(ctx context.Context, cmd domain.AddResidentAgentCommand) error {
-			addResidentAgent(agentRunner, &cmd.Resident)
+			newResidentAgent := addResidentAgent(agentRunner, &cmd.Resident)
+			eventBroker.registerRoutes(cmd.Resident.ID, newResidentAgent.inbox)
 			return nil
 		})
 	registerHandler(

@@ -78,10 +78,12 @@ func (r *agentRunner) reconcileResidentAgents(ctx context.Context) {
 	}
 }
 
-func addResidentAgent(ar *agentRunner, resident *domain.Resident) {
+func addResidentAgent(ar *agentRunner, resident *domain.Resident) *residentAgent {
+	residentAgent := ar.factory.newResidentAgent(resident)
 	ar.state.residentAgents.mu.Lock()
-	ar.state.residentAgents.desired = append(ar.state.residentAgents.desired, *ar.factory.newResidentAgent(resident))
+	ar.state.residentAgents.desired = append(ar.state.residentAgents.desired, *residentAgent)
 	ar.state.residentAgents.mu.Unlock()
 
 	ar.signalCh <- reconcileSignal{}
+	return residentAgent
 }
