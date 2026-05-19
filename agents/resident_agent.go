@@ -14,11 +14,11 @@ import (
 const maxMemoryInLLMContext = 50
 
 type residentAgent struct {
-	*agentBase
+	agentBase
 	resident *domain.Resident
 }
 
-func newResidentAgent(base *agentBase, resident *domain.Resident) *residentAgent {
+func newResidentAgent(base agentBase, resident *domain.Resident) *residentAgent {
 	systemPromptTemplate := `レスポンスは以下のJSONスキーマの文字列で行うようにしてください。：%s`
 	systemPrompt := fmt.Sprintf(systemPromptTemplate, residentLLMResponseSchema)
 	base.llmPrompt.AddSystemPrompt(systemPrompt)

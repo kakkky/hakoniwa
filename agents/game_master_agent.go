@@ -3,7 +3,7 @@ package agents
 import "context"
 
 type gameMasterAgent struct {
-	*agentBase
+	agentBase
 }
 
 func (gma *gameMasterAgent) run(ctx context.Context) error {

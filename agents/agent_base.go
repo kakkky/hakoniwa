@@ -14,9 +14,9 @@ type agentBase struct {
 func newAgentBase(
 	sendEvent func(domain.Event),
 	llmProvider domain.LLMProvider,
-) *agentBase {
+) agentBase {
 	inbox := make(chan domain.Event, 16)
-	return &agentBase{
+	return agentBase{
 		inbox:       inbox,
 		sendEvent:   sendEvent,
 		llmProvider: llmProvider,
