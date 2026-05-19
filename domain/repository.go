@@ -1,6 +1,6 @@
 package domain
 
-//go:generate mockgen -source=repository.go -destination=mock/mock_repository.go -package=mock
+//go:generate mockgen -source=repository.go -destination=../testing/mock/mock_repository.go -package=mock
 
 // Reposutory Interfaces
 type ResidentRepository interface {

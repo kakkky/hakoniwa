@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/kakkky/hakoniwa/domain"
-	"github.com/kakkky/hakoniwa/domain/mock"
+	"github.com/kakkky/hakoniwa/testing/mock"
 	"go.uber.org/mock/gomock"
 )
 
