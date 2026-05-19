@@ -1,12 +1,12 @@
 package domain
 
-//go:generate mockgen -source=agent_commander.go -destination=mock/mock_agent_commander.go -package=mock
+//go:generate mockgen -source=agent_command_publisher.go -destination=../testing/mock/mock_agent_command_publisher.go -package=mock
 
 import (
 	"context"
 )
 
-type AgentCommander interface {
+type AgentCommandPublisher interface {
 	PublishCommand(ctx context.Context, cmd AgentCommand) error
 }
 
@@ -22,7 +22,7 @@ const (
 	AddResidentAgent AgentCommandKey = "add_resident_agent"
 )
 
-type AgentCommandInbox chan AgentCommand
+type AgentCommandCh chan AgentCommand
 
 type PublishEventCommand struct {
 	Event Event

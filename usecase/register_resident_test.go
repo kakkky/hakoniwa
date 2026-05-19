@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/kakkky/hakoniwa/domain"
-	"github.com/kakkky/hakoniwa/domain/mock"
+	"github.com/kakkky/hakoniwa/testing/mock"
 	"github.com/kakkky/hakoniwa/usecase"
 	"go.uber.org/mock/gomock"
 )
@@ -18,14 +18,14 @@ func TestRegisterResident_Exec(t *testing.T) {
 		inputName string
 		inputAge  int
 		inputGen  domain.Gender
-		setupMock func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, cmder *mock.MockAgentCommander, inputName string, inputAge int, inputGen domain.Gender)
+		setupMock func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher, inputName string, inputAge int, inputGen domain.Gender)
 	}{
 		{
 			name:      "Generate→Save→PublishCommand が全て成功すれば nil",
 			inputName: "山田",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, cmder *mock.MockAgentCommander, inputName string, inputAge int, inputGen domain.Gender) {
+			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher, inputName string, inputAge int, inputGen domain.Gender) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).
 					Return(domain.LLMResponse(`{"traits":["優しい","几帳面"]}`), nil)
 				repo.EXPECT().Save(gomock.Cond(func(r *domain.Resident) bool {
@@ -35,7 +35,7 @@ func TestRegisterResident_Exec(t *testing.T) {
 						r.Gender == inputGen &&
 						len(r.Traits) > 0
 				})).Return(nil)
-				cmder.EXPECT().PublishCommand(
+				pub.EXPECT().PublishCommand(
 					gomock.Any(),
 					gomock.AssignableToTypeOf(domain.AddResidentAgentCommand{}),
 				).Return(nil)
@@ -48,10 +48,10 @@ func TestRegisterResident_Exec(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			llm := mock.NewMockLLMProvider(ctrl)
 			repo := mock.NewMockResidentRepository(ctrl)
-			cmder := mock.NewMockAgentCommander(ctrl)
-			tt.setupMock(llm, repo, cmder, tt.inputName, tt.inputAge, tt.inputGen)
+			pub := mock.NewMockAgentCommandPublisher(ctrl)
+			tt.setupMock(llm, repo, pub, tt.inputName, tt.inputAge, tt.inputGen)
 
-			uc := usecase.NewRegisterResident(repo, llm, cmder)
+			uc := usecase.NewRegisterResident(repo, llm, pub)
 			if err := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "穏やかで几帳面"); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -69,7 +69,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 		inputName          string
 		inputAge           int
 		inputGen           domain.Gender
-		setupMock          func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, cmder *mock.MockAgentCommander)
+		setupMock          func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher)
 		wantErrIs          error
 		wantErrMsgContains string
 	}{
@@ -78,7 +78,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputName: "山田",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommander) {
+			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(""), generateErr)
 			},
 			wantErrIs:          generateErr,
@@ -89,7 +89,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputName: "山田",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommander) {
+			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse("not json"), nil)
 			},
 			wantErrMsgContains: "failed to generate traits",
@@ -99,7 +99,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputName: "",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommander) {
+			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
 			},
 			wantErrMsgContains: "failed to create resident",
@@ -109,7 +109,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputName: "山田",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, _ *mock.MockAgentCommander) {
+			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
 				repo.EXPECT().Save(gomock.Any()).Return(saveErr)
 			},
@@ -121,10 +121,10 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputName: "山田",
 			inputAge:  30,
 			inputGen:  domain.Male,
-			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, cmder *mock.MockAgentCommander) {
+			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher) {
 				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
 				repo.EXPECT().Save(gomock.Any()).Return(nil)
-				cmder.EXPECT().PublishCommand(gomock.Any(), gomock.Any()).Return(publishErr)
+				pub.EXPECT().PublishCommand(gomock.Any(), gomock.Any()).Return(publishErr)
 			},
 			wantErrIs:          publishErr,
 			wantErrMsgContains: "failed to publish AddResidentAgentCommand",
@@ -136,10 +136,10 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			llm := mock.NewMockLLMProvider(ctrl)
 			repo := mock.NewMockResidentRepository(ctrl)
-			cmder := mock.NewMockAgentCommander(ctrl)
-			tt.setupMock(llm, repo, cmder)
+			pub := mock.NewMockAgentCommandPublisher(ctrl)
+			tt.setupMock(llm, repo, pub)
 
-			uc := usecase.NewRegisterResident(repo, llm, cmder)
+			uc := usecase.NewRegisterResident(repo, llm, pub)
 			err := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "personality")
 			if err == nil {
 				t.Fatal("expected error, got nil")

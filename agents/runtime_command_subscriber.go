@@ -7,15 +7,15 @@ import (
 )
 
 type commandSubscriber struct {
-	cmdInbox domain.AgentCommandInbox
-	routes   map[domain.AgentCommandKey]commandHandlerFunc
+	agentCommandCh domain.AgentCommandCh
+	routes         map[domain.AgentCommandKey]commandHandlerFunc
 }
 
 type commandHandlerFunc func(ctx context.Context, cmd domain.AgentCommand) error
 
-func newCommandSubscriber() *commandSubscriber {
+func newCommandSubscriber(ch domain.AgentCommandCh) *commandSubscriber {
 	return &commandSubscriber{
-		cmdInbox: make(domain.AgentCommandInbox, 32),
+		agentCommandCh: ch,
 	}
 }
 
@@ -33,7 +33,7 @@ func (cs *commandSubscriber) run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case cmd := <-cs.cmdInbox:
+		case cmd := <-cs.agentCommandCh:
 			if handler, ok := cs.routes[cmd.CommandKey()]; ok {
 				handler(ctx, cmd)
 			}

@@ -12,18 +12,18 @@ import (
 type RegisterResident struct {
 	repository     domain.ResidentRepository
 	llmProvider    domain.LLMProvider
-	agentCommander domain.AgentCommander
+	agentCommandPublisher domain.AgentCommandPublisher
 }
 
 func NewRegisterResident(
 	repository domain.ResidentRepository,
 	llmProvider domain.LLMProvider,
-	agentCommander domain.AgentCommander,
+	agentCommandPublisher domain.AgentCommandPublisher,
 ) *RegisterResident {
 	return &RegisterResident{
-		repository:     repository,
-		llmProvider:    llmProvider,
-		agentCommander: agentCommander,
+		repository:            repository,
+		llmProvider:           llmProvider,
+		agentCommandPublisher: agentCommandPublisher,
 	}
 }
 
@@ -52,7 +52,7 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 		return fmt.Errorf("failed to save resident: %w", err)
 	}
 
-	if err := r.agentCommander.PublishCommand(ctx, domain.AddResidentAgentCommand{Resident: *resident}); err != nil {
+	if err := r.agentCommandPublisher.PublishCommand(ctx, domain.AddResidentAgentCommand{Resident: *resident}); err != nil {
 		return fmt.Errorf("failed to publish AddResidentAgentCommand: %w", err)
 	}
 

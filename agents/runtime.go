@@ -12,7 +12,7 @@ type Runtime struct {
 	agentRunner       *agentRunner
 }
 
-func NewRuntime(llmProvider domain.LLMProvider) *Runtime {
+func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentCommandCh) *Runtime {
 	// EventBroker
 	eventBroker := newEventBroker()
 
@@ -34,7 +34,7 @@ func NewRuntime(llmProvider domain.LLMProvider) *Runtime {
 	})
 
 	// CommandSubscriber
-	commandSubscriber := newCommandSubscriber()
+	commandSubscriber := newCommandSubscriber(agentCommandCh)
 	registerHandler(
 		commandSubscriber,
 		domain.AddResidentAgentCommand{},
@@ -64,10 +64,4 @@ func (r *Runtime) Run(ctx context.Context) error {
 	go r.agentRunner.run(ctx)
 
 	return nil
-}
-
-// CommandInbox は外部から command を流し込むためのチャネルを返す。
-// AgentCommander の実装にこのチャネルを渡して利用する。
-func AgentCommandInbox(r *Runtime) domain.AgentCommandInbox {
-	return r.commandSubscriber.cmdInbox
 }

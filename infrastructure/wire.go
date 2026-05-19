@@ -16,6 +16,7 @@ var Set = wire.NewSet(
 	file.NewFileResidentRepository,
 	wire.Bind(new(domain.ResidentRepository), new(*file.FileResidentRepository)),
 	llm.NewLLMGeminiProvider,
-	agent.NewAgentCommander,
-	wire.Bind(new(domain.AgentCommander), new(*agent.AgentCommander)),
+	agent.NewAgentCommandPublisher,
+	wire.Bind(new(domain.AgentCommandPublisher), new(*agent.AgentCommandPublisher)),
+	agent.NewAgentCommandCh,
 )

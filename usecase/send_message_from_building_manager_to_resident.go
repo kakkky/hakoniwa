@@ -7,12 +7,12 @@ import (
 )
 
 type SendMessageFromBuildingManagerToResident struct {
-	agentCommander domain.AgentCommander
+	agentCommandPublisher domain.AgentCommandPublisher
 }
 
-func NewSendMessageFromBuildingManagerToResident(agentCommander domain.AgentCommander) *SendMessageFromBuildingManagerToResident {
+func NewSendMessageFromBuildingManagerToResident(agentCommandPublisher domain.AgentCommandPublisher) *SendMessageFromBuildingManagerToResident {
 	return &SendMessageFromBuildingManagerToResident{
-		agentCommander: agentCommander,
+		agentCommandPublisher: agentCommandPublisher,
 	}
 }
 
@@ -32,7 +32,7 @@ func (sm *SendMessageFromBuildingManagerToResident) Exec(ctx context.Context, to
 			Message: msg,
 		},
 	}
-	if err := sm.agentCommander.PublishCommand(ctx, cmd); err != nil {
+	if err := sm.agentCommandPublisher.PublishCommand(ctx, cmd); err != nil {
 		return err
 	}
 	return nil

@@ -20,7 +20,8 @@ import (
 
 func initializeApp() (*App, error) {
 	llmProvider := llm.NewLLMGeminiProvider()
-	runtime := agents.NewRuntime(llmProvider)
+	agentCommandCh := agent.NewAgentCommandCh()
+	runtime := agents.NewRuntime(llmProvider, agentCommandCh)
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
@@ -30,10 +31,9 @@ func initializeApp() (*App, error) {
 		return nil, err
 	}
 	fileResidentRepository := file.NewFileResidentRepository(filePaths)
-	agentCommandInbox := agents.AgentCommandInbox(runtime)
-	agentCommander := agent.NewAgentCommander(agentCommandInbox)
-	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommander)
-	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommander)
+	agentCommandPublisher := agent.NewAgentCommandPublisher(agentCommandCh)
+	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommandPublisher)
+	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)
 	tuiTUI := tui.NewTUI(registerResident, sendMessageFromBuildingManagerToResident)
 	app := &App{
 		AgentRuntime: runtime,
