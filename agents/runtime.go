@@ -18,20 +18,17 @@ func NewRuntime(llmProvider domain.LLMProvider) *Runtime {
 
 	// AgentRunner
 	agentRunner := newAgentRunner()
-	agentBase := newAgentBase(
-		func(e domain.Event) { eventBroker.inbox <- e },
-		llmProvider,
-	)
+	sendEventFunc := func(e domain.Event) { eventBroker.inbox <- e }
 	agentRunner.setAgentFactory(agentFactory{
 		newResidentAgent: func(resident *domain.Resident) *residentAgent {
 			return &residentAgent{
-				agentBase: agentBase,
+				agentBase: newAgentBase(sendEventFunc, llmProvider),
 				resident:  resident,
 			}
 		},
 		newGameMasterAgent: func() *gameMasterAgent {
 			return &gameMasterAgent{
-				agentBase: agentBase,
+				agentBase: newAgentBase(sendEventFunc, llmProvider),
 			}
 		},
 	})
