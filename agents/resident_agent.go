@@ -15,7 +15,8 @@ const maxMemoryInLLMContext = 50
 
 type residentAgent struct {
 	agentBase
-	resident *domain.Resident
+	resident   *domain.Resident
+	repository domain.ResidentRepository
 }
 
 func newResidentAgent(base agentBase, resident *domain.Resident) *residentAgent {
@@ -83,24 +84,35 @@ func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domai
 	if err != nil {
 		return err
 	}
-	ra.handleResidentLLMResponse(res)
+	if err := ra.handleResidentLLMResponse(res); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) {
-	if res.StateUpdate != nil {
+func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) error {
+
+	toolUse := res.ToolUse
+	if toolUse != nil {
 		switch {
-		case res.StateUpdate.Mood != "":
-			ra.resident.UpdateMood(res.StateUpdate.Mood)
+		case toolUse.UpdateMood != nil:
+			ra.resident.UpdateMood(toolUse.UpdateMood.Mood)
+			if err := ra.repository.Save(ra.resident); err != nil {
+				return err
+			}
 		}
 	}
+
 	action := res.Action
 	switch action {
 	case ResidentActionMessage:
 		ra.sendEvent(domain.MessageEvent{
 			EventBase: domain.EventBase{
-				EventTo: domain.EventTo{ID: res.To},
+				EventTo: domain.EventTo{
+					ID:   res.To.ID,
+					Name: res.To.Name,
+				},
 				EventFrom: domain.EventFrom{
 					ID:   domain.ActorID(ra.resident.ID),
 					Name: domain.ActorName(ra.resident.Name),
@@ -108,10 +120,19 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) {
 			},
 			Message: res.Payload,
 		})
+		newMemoryContent := fmt.Sprintf(`%sに「%s」とメッセージを受け取った。`, res.To.Name, res.Payload)
+		newMemory := domain.Memory{
+			Content:   newMemoryContent,
+			OccuredAt: time.Now(),
+		}
+		ra.resident.AddMemory(newMemory)
 	case ResidentActionOpportunity:
 		ra.sendEvent(domain.OpportunityEvent{
 			EventBase: domain.EventBase{
-				EventTo: domain.EventTo{ID: res.To},
+				EventTo: domain.EventTo{
+					ID:   res.To.ID,
+					Name: res.To.Name,
+				},
 				EventFrom: domain.EventFrom{
 					ID:   domain.ActorID(ra.resident.ID),
 					Name: domain.ActorName(ra.resident.Name),
@@ -119,9 +140,15 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) {
 			},
 			Opportunity: res.Payload,
 		})
+		newMemoryContent := fmt.Sprintf(`%sに%s`, res.To.Name, res.Payload)
+		newMemory := domain.Memory{
+			Content:   newMemoryContent,
+			OccuredAt: time.Now(),
+		}
+		ra.resident.AddMemory(newMemory)
 	case ResidentActionStay:
-		return
 	}
+	return nil
 }
 
 //go:embed schema/resident_agent_llm_response_schema.json
@@ -136,14 +163,23 @@ const (
 )
 
 type residentLLMResponse struct {
-	Action      ResidentActionKind   `json:"action"`
-	To          domain.ResidentID    `json:"to,omitempty"`
-	Payload     string               `json:"payload"`
-	StateUpdate *residentStateUpdate `json:"state_update,omitempty"`
+	Action  ResidentActionKind `json:"action"`
+	To      ResidentActionTo   `json:"to,omitempty"`
+	Payload string             `json:"payload"`
+	ToolUse *ResidentToolUse   `json:"tool_use,omitempty"`
 }
 
-type residentStateUpdate struct {
-	Mood domain.Mood `json:"mood,omitempty"`
+type ResidentActionTo struct {
+	ID   domain.ResidentID   `json:"id"`
+	Name domain.ResidentName `json:"name"`
+}
+
+type ResidentToolUse struct {
+	UpdateMood *updateMood `json:"update_mood,omitempty"`
+}
+
+type updateMood struct {
+	Mood domain.Mood `json:"mood"`
 }
 
 func parseResidentLLMResponse(raw domain.LLMResponse) (residentLLMResponse, error) {
