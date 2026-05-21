@@ -21,7 +21,6 @@ import (
 func initializeApp() (*App, error) {
 	llmProvider := llm.NewLLMGeminiProvider()
 	agentCommandCh := agent.NewAgentCommandCh()
-	runtime := agents.NewRuntime(llmProvider, agentCommandCh)
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
@@ -31,6 +30,10 @@ func initializeApp() (*App, error) {
 		return nil, err
 	}
 	fileResidentRepository := file.NewFileResidentRepository(filePaths)
+	toolKit := agents.ToolKit{
+		ResidentRepository: fileResidentRepository,
+	}
+	runtime := agents.NewRuntime(llmProvider, agentCommandCh, toolKit)
 	agentCommandPublisher := agent.NewAgentCommandPublisher(agentCommandCh)
 	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommandPublisher)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)

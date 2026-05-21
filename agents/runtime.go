@@ -12,7 +12,7 @@ type Runtime struct {
 	agentRunner       *agentRunner
 }
 
-func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentCommandCh) *Runtime {
+func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentCommandCh, toolKit ToolKit) *Runtime {
 	// EventBroker
 	eventBroker := newEventBroker()
 
@@ -22,8 +22,9 @@ func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentComma
 	agentRunner.setAgentFactory(agentFactory{
 		newResidentAgent: func(resident *domain.Resident) *residentAgent {
 			return &residentAgent{
-				agentBase: newAgentBase(sendEventFunc, llmProvider),
-				resident:  resident,
+				agentBase:  newAgentBase(sendEventFunc, llmProvider),
+				resident:   resident,
+				repository: toolKit.ResidentRepository,
 			}
 		},
 		newGameMasterAgent: func() *gameMasterAgent {

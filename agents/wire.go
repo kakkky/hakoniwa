@@ -9,4 +9,5 @@ import (
 
 var Set = wire.NewSet(
 	NewRuntime,
+	 wire.Struct(new(ToolKit), "*")
 )

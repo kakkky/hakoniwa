@@ -19,6 +19,10 @@ func newAgentRunner() *agentRunner {
 	}
 }
 
+type ToolKit struct {
+	ResidentRepository domain.ResidentRepository
+}
+
 func (ar *agentRunner) setAgentFactory(factory agentFactory) {
 	ar.factory = factory
 }
