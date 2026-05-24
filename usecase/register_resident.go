@@ -33,14 +33,13 @@ type registerResidentExtractTraitsResponse struct {
 }
 
 func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gender domain.Gender, personalityDescription string) error {
-	systemPromptTemplate := ``
-	systemPrompt := fmt.Sprintf(``, systemPromptTemplate)
-	userPromptTemplate := `
+	userPromptTemplate :=
+		`以下の文章はある人の性格を表した文章です。その文章をいくつかの特徴(traits)に落とし込んでください
+		文章：%s
+		`
 
-	`
 	userPrompt := fmt.Sprintf(userPromptTemplate, personalityDescription)
 	var llmPrompt domain.LLMPrompts
-	llmPrompt.AddSystemPrompt(systemPrompt)
 	llmPrompt.AddUserPrompt(userPrompt)
 
 	rawResp, err := r.llmProvider.Generate(ctx, &llmPrompt, llmresponse.RegisterResidentExtractTraits)
