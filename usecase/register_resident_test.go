@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -11,6 +12,11 @@ import (
 	"github.com/kakkky/hakoniwa/usecase"
 	"go.uber.org/mock/gomock"
 )
+
+func rawMsg(s string) *json.RawMessage {
+	r := json.RawMessage(s)
+	return &r
+}
 
 func TestRegisterResident_Exec(t *testing.T) {
 	tests := []struct {
@@ -26,8 +32,8 @@ func TestRegisterResident_Exec(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher, inputName string, inputAge int, inputGen domain.Gender) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).
-					Return(domain.LLMResponse(`{"traits":["優しい","几帳面"]}`), nil)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(rawMsg(`{"traits":["優しい","几帳面"]}`), nil)
 				repo.EXPECT().Save(gomock.Cond(func(r *domain.Resident) bool {
 					return r != nil &&
 						string(r.Name) == inputName &&
@@ -79,7 +85,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(""), generateErr)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, generateErr)
 			},
 			wantErrIs:          generateErr,
 			wantErrMsgContains: "failed to generate traits",
@@ -90,7 +96,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse("not json"), nil)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(rawMsg("not json"), nil)
 			},
 			wantErrMsgContains: "failed to generate traits",
 		},
@@ -100,7 +106,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, _ *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(rawMsg(`{"traits":["優しい"]}`), nil)
 			},
 			wantErrMsgContains: "failed to create resident",
 		},
@@ -110,7 +116,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, _ *mock.MockAgentCommandPublisher) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(rawMsg(`{"traits":["優しい"]}`), nil)
 				repo.EXPECT().Save(gomock.Any()).Return(saveErr)
 			},
 			wantErrIs:          saveErr,
@@ -122,7 +128,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			inputAge:  30,
 			inputGen:  domain.Male,
 			setupMock: func(llm *mock.MockLLMProvider, repo *mock.MockResidentRepository, pub *mock.MockAgentCommandPublisher) {
-				llm.EXPECT().Generate(gomock.Any(), gomock.Any()).Return(domain.LLMResponse(`{"traits":["優しい"]}`), nil)
+				llm.EXPECT().Generate(gomock.Any(), gomock.Any(), gomock.Any()).Return(rawMsg(`{"traits":["優しい"]}`), nil)
 				repo.EXPECT().Save(gomock.Any()).Return(nil)
 				pub.EXPECT().PublishCommand(gomock.Any(), gomock.Any()).Return(publishErr)
 			},

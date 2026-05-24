@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kakkky/hakoniwa/domain"
+	llmresponse "github.com/kakkky/hakoniwa/schema/llm_response"
 )
 
 const maxMemoryInLLMContext = 50
@@ -20,13 +21,41 @@ type residentAgent struct {
 }
 
 func newResidentAgent(base agentBase, resident *domain.Resident) *residentAgent {
-	systemPromptTemplate := `レスポンスは以下のJSONスキーマの文字列で行うようにしてください。：%s`
-	systemPrompt := fmt.Sprintf(systemPromptTemplate, residentLLMResponseSchema)
+	systemPromptTemplate := ``
+	systemPrompt := fmt.Sprintf(systemPromptTemplate)
 	base.llmPrompt.AddSystemPrompt(systemPrompt)
 	return &residentAgent{
 		agentBase: base,
 		resident:  resident,
 	}
+}
+
+type residentAgentProcessResponse struct {
+	Action  residentActionKind `json:"action"`
+	To      residentActionTo   `json:"to,omitempty"`
+	Payload string             `json:"payload"`
+	ToolUse *residentToolUse   `json:"tool_use,omitempty"`
+}
+
+type residentActionKind string
+
+const (
+	residentActionMessage     residentActionKind = "message"
+	residentActionOpportunity residentActionKind = "opportunity"
+	residentActionStay        residentActionKind = "stay"
+)
+
+type residentActionTo struct {
+	ID   domain.ResidentID   `json:"id"`
+	Name domain.ResidentName `json:"name"`
+}
+
+type residentToolUse struct {
+	UpdateMood *updateMood `json:"update_mood,omitempty"`
+}
+
+type updateMood struct {
+	Mood domain.Mood `json:"mood"`
 }
 
 func (ra *residentAgent) run(ctx context.Context) error {
@@ -62,7 +91,13 @@ func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) e
 		ra.resident.AddMemory(newMemory)
 		return ra.processMessageEvent(ctx, eventV, llmContext)
 	case domain.OpportunityEvent:
-		_ = eventV
+		newMemoryContent := fmt.Sprintf(`%sに%s。`, eventV.EventFrom.Name, eventV.Opportunity)
+		newMemory := domain.Memory{
+			Content:   newMemoryContent,
+			OccuredAt: time.Now(),
+		}
+		ra.resident.AddMemory(newMemory)
+		return ra.processOppotunityeEvent(ctx, eventV, llmContext)
 	}
 
 	return nil
@@ -80,18 +115,49 @@ func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domai
 	ra.llmPrompt.AddSystemPrompt(systemPrompt)
 	ra.llmPrompt.AddUserPrompt(userPrompt)
 
-	res, err := domain.CallLLM(ctx, ra.llmProvider, ra.llmPrompt, residentLLMResponseSchema, parseResidentLLMResponse)
+	rawResp, err := ra.llmProvider.Generate(ctx, ra.llmPrompt, llmresponse.ResidentAgentProcess)
 	if err != nil {
 		return err
 	}
-	if err := ra.handleResidentLLMResponse(res); err != nil {
+	var residentAgentProcessResponse residentAgentProcessResponse
+	if err := json.Unmarshal(rawResp, &residentAgentProcessResponse); err != nil {
+		return nil
+	}
+	if err := ra.handleResidentLLMResponse(residentAgentProcessResponse); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) error {
+func (ra *residentAgent) processOppotunityeEvent(ctx context.Context, oppEvent domain.OpportunityEvent, llmContext strings.Builder) error {
+	msg := oppEvent.Payload()
+
+	systemPromptTemplate := ``
+	systemPrompt := fmt.Sprintf(systemPromptTemplate, nil)
+	userPromptTemplate := ``
+
+	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
+
+	ra.llmPrompt.AddSystemPrompt(systemPrompt)
+	ra.llmPrompt.AddUserPrompt(userPrompt)
+
+	rawResp, err := ra.llmProvider.Generate(ctx, ra.llmPrompt, llmresponse.ResidentAgentProcess)
+	if err != nil {
+		return err
+	}
+	var residentAgentProcessResponse residentAgentProcessResponse
+	if err := json.Unmarshal(rawResp, &residentAgentProcessResponse); err != nil {
+		return err
+	}
+	if err := ra.handleResidentLLMResponse(residentAgentProcessResponse); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessResponse) error {
 
 	toolUse := res.ToolUse
 	if toolUse != nil {
@@ -106,7 +172,7 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) erro
 
 	action := res.Action
 	switch action {
-	case ResidentActionMessage:
+	case residentActionMessage:
 		ra.sendEvent(domain.MessageEvent{
 			EventBase: domain.EventBase{
 				EventTo: domain.EventTo{
@@ -126,7 +192,7 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) erro
 			OccuredAt: time.Now(),
 		}
 		ra.resident.AddMemory(newMemory)
-	case ResidentActionOpportunity:
+	case residentActionOpportunity:
 		ra.sendEvent(domain.OpportunityEvent{
 			EventBase: domain.EventBase{
 				EventTo: domain.EventTo{
@@ -146,46 +212,7 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentLLMResponse) erro
 			OccuredAt: time.Now(),
 		}
 		ra.resident.AddMemory(newMemory)
-	case ResidentActionStay:
+	case residentActionStay:
 	}
 	return nil
-}
-
-//go:embed schema/resident_agent_llm_response_schema.json
-var residentLLMResponseSchema string
-
-type ResidentActionKind string
-
-const (
-	ResidentActionMessage     ResidentActionKind = "message"
-	ResidentActionOpportunity ResidentActionKind = "opportunity"
-	ResidentActionStay        ResidentActionKind = "stay"
-)
-
-type residentLLMResponse struct {
-	Action  ResidentActionKind `json:"action"`
-	To      ResidentActionTo   `json:"to,omitempty"`
-	Payload string             `json:"payload"`
-	ToolUse *ResidentToolUse   `json:"tool_use,omitempty"`
-}
-
-type ResidentActionTo struct {
-	ID   domain.ResidentID   `json:"id"`
-	Name domain.ResidentName `json:"name"`
-}
-
-type ResidentToolUse struct {
-	UpdateMood *updateMood `json:"update_mood,omitempty"`
-}
-
-type updateMood struct {
-	Mood domain.Mood `json:"mood"`
-}
-
-func parseResidentLLMResponse(raw domain.LLMResponse) (residentLLMResponse, error) {
-	var res residentLLMResponse
-	if err := json.Unmarshal([]byte(raw), &res); err != nil {
-		return residentLLMResponse{}, err
-	}
-	return res, nil
 }

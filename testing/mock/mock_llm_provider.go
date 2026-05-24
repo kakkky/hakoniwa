@@ -11,6 +11,7 @@ package mock
 
 import (
 	context "context"
+	json "encoding/json"
 	reflect "reflect"
 
 	domain "github.com/kakkky/hakoniwa/domain"
@@ -42,16 +43,16 @@ func (m *MockLLMProvider) EXPECT() *MockLLMProviderMockRecorder {
 }
 
 // Generate mocks base method.
-func (m *MockLLMProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts) (domain.LLMResponse, error) {
+func (m *MockLLMProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Generate", ctx, prompts)
-	ret0, _ := ret[0].(domain.LLMResponse)
+	ret := m.ctrl.Call(m, "Generate", ctx, prompts, responseSchema)
+	ret0, _ := ret[0].(json.RawMessage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Generate indicates an expected call of Generate.
-func (mr *MockLLMProviderMockRecorder) Generate(ctx, prompts any) *gomock.Call {
+func (mr *MockLLMProviderMockRecorder) Generate(ctx, prompts, responseSchema any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockLLMProvider)(nil).Generate), ctx, prompts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockLLMProvider)(nil).Generate), ctx, prompts, responseSchema)
 }

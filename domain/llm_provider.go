@@ -4,6 +4,7 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 )
 
@@ -23,20 +24,5 @@ func (l *LLMPrompts) AddUserPrompt(new string) {
 type LLMResponse string
 
 type LLMProvider interface {
-	Generate(ctx context.Context, prompts *LLMPrompts) (LLMResponse, error)
-}
-
-func CallLLM[RES any](
-	ctx context.Context,
-	p LLMProvider,
-	prompts *LLMPrompts,
-	schema string,
-	parse func(LLMResponse) (RES, error),
-) (RES, error) {
-	var zero RES
-	raw, err := p.Generate(ctx, prompts)
-	if err != nil {
-		return zero, err
-	}
-	return parse(raw)
+	Generate(ctx context.Context, prompts *LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error)
 }

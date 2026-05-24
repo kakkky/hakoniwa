@@ -7,11 +7,12 @@ import (
 	"fmt"
 
 	"github.com/kakkky/hakoniwa/domain"
+	llmresponse "github.com/kakkky/hakoniwa/schema/llm_response"
 )
 
 type RegisterResident struct {
-	repository     domain.ResidentRepository
-	llmProvider    domain.LLMProvider
+	repository            domain.ResidentRepository
+	llmProvider           domain.LLMProvider
 	agentCommandPublisher domain.AgentCommandPublisher
 }
 
@@ -27,9 +28,13 @@ func NewRegisterResident(
 	}
 }
 
+type registerResidentExtractTraitsResponse struct {
+	Traits []domain.Trait `json:"traits"`
+}
+
 func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gender domain.Gender, personalityDescription string) error {
-	systemPromptTemplate := `レスポンスは以下のJSONスキーマの文字列で行うようにしてください。：%s`
-	systemPrompt := fmt.Sprintf(systemPromptTemplate, registerResidentLLMResponseSchema)
+	systemPromptTemplate := ``
+	systemPrompt := fmt.Sprintf(``, systemPromptTemplate)
 	userPromptTemplate := `
 
 	`
@@ -38,10 +43,16 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 	llmPrompt.AddSystemPrompt(systemPrompt)
 	llmPrompt.AddUserPrompt(userPrompt)
 
-	traits, err := domain.CallLLM(ctx, r.llmProvider, &llmPrompt, registerResidentLLMResponseSchema, parseRegisterResidentLLMResponse)
+	rawResp, err := r.llmProvider.Generate(ctx, &llmPrompt, llmresponse.RegisterResidentExtractTraits)
 	if err != nil {
 		return fmt.Errorf("failed to generate traits: %w", err)
 	}
+	var registerResidentExtractTraits registerResidentExtractTraitsResponse
+	if err := json.Unmarshal(rawResp, &registerResidentExtractTraits); err != nil {
+		return nil
+	}
+
+	traits := registerResidentExtractTraits.Traits
 
 	resident, err := domain.NewResident(name, age, gender, traits)
 	if err != nil {
@@ -57,23 +68,4 @@ func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gende
 	}
 
 	return nil
-}
-
-//go:embed schema/register_resident_llm_response_schema.json
-var registerResidentLLMResponseSchema string
-
-type registerResidentLLMResponse struct {
-	Traits []string `json:"traits"`
-}
-
-func parseRegisterResidentLLMResponse(raw domain.LLMResponse) ([]domain.Trait, error) {
-	var res registerResidentLLMResponse
-	if err := json.Unmarshal([]byte(raw), &res); err != nil {
-		return nil, err
-	}
-	traits := make([]domain.Trait, len(res.Traits))
-	for i, t := range res.Traits {
-		traits[i] = domain.Trait(t)
-	}
-	return traits, nil
 }
