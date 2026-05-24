@@ -7,7 +7,7 @@ type ResidentRepository interface {
 	Save(resident *Resident) error
 	SaveAll(residents []*Resident) error
 	GetAll() ([]*Resident, error)
-	// FindByID(id string) (*Resident, error)
+	FindByID(id ResidentID) (*Resident, error)
 	// DeleteByID(id string) error
 }
 

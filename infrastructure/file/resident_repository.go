@@ -2,7 +2,9 @@ package file
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+	"slices"
 
 	"github.com/kakkky/hakoniwa/domain"
 )
@@ -69,4 +71,23 @@ func (repo *FileResidentRepository) GetAll() ([]*domain.Resident, error) {
 		return nil, err
 	}
 	return residents, nil
+}
+
+func (repo *FileResidentRepository) FindByID(id domain.ResidentID) (*domain.Resident, error) {
+	data, err := os.ReadFile(repo.filePath)
+	if err != nil {
+		return nil, err
+	}
+	var residents []*domain.Resident
+	if err := json.Unmarshal(data, &residents); err != nil {
+		return nil, err
+	}
+	index := slices.IndexFunc(residents, func(r *domain.Resident) bool {
+		return r.ID == id
+	})
+	if index == -1 {
+		return nil, errors.New("not found")
+	}
+	return residents[index], nil
+
 }
