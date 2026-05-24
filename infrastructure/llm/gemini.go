@@ -3,20 +3,21 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/kakkky/hakoniwa/config"
 	"github.com/kakkky/hakoniwa/domain"
 	"google.golang.org/genai"
 )
 
-const model = ""
+const model = "gemini-2.5-flash-lite"
 
 type LLMGeminiProvider struct {
 	client *genai.Client
 }
 
-func NewLLMGeminiProvider(ctx context.Context, cfg config.Config) (*LLMGeminiProvider, error) {
-	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+func NewLLMGeminiProvider(cfg *config.Config) (*LLMGeminiProvider, error) {
+	client, err := genai.NewClient(context.Background(), &genai.ClientConfig{
 		APIKey: cfg.GeminiAPIKey,
 	})
 	if err != nil {
@@ -27,7 +28,25 @@ func NewLLMGeminiProvider(ctx context.Context, cfg config.Config) (*LLMGeminiPro
 	}, nil
 }
 
-func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, responseSchema *json.RawMessage) (*json.RawMessage, error) {
-	p.client.Models.GenerateContent(ctx, model, nil, nil)
-	return nil, nil
+func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
+	if responseSchema == nil {
+		return nil, errors.New("schema is required")
+	}
+	gcc := &genai.GenerateContentConfig{
+		SystemInstruction: &genai.Content{
+			Parts: []*genai.Part{
+				{Text: prompts.System.String()},
+			},
+		},
+		ResponseMIMEType:   "application/json",
+		ResponseJsonSchema: responseSchema,
+	}
+	contents := []*genai.Content{
+		genai.NewContentFromText(prompts.User.String(), genai.RoleUser),
+	}
+	resp, err := p.client.Models.GenerateContent(ctx, model, contents, gcc)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(resp.Text()), nil
 }
