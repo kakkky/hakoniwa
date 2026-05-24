@@ -4,6 +4,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -17,12 +18,23 @@ type Resident struct {
 	Name     ResidentName `json:"name"`
 	Age      int          `json:"age"`
 	Gender   Gender       `json:"gender"`
-	Traits   []Trait      `json:"traits"`
+	Traits   Traits       `json:"traits"`
 	Mood     Mood         `json:"mood"`
-	Memories []Memory     `json:"memories"`
+	Memories Memories     `json:"memories"`
 }
 
 type Gender int
+
+func (g Gender) String() string {
+	switch g {
+	case Male:
+		return "男性"
+	case Female:
+		return "女性"
+	default:
+		return "不明"
+	}
+}
 
 const (
 	Unspecified Gender = iota
@@ -31,6 +43,15 @@ const (
 )
 
 type Trait string
+type Traits []Trait
+
+func (ts Traits) String() string {
+	traits := make([]string, len(ts))
+	for _, t := range ts {
+		traits = append(traits, string(t))
+	}
+	return strings.Join(traits, ",")
+}
 
 type Mood string
 
@@ -39,8 +60,15 @@ type Memory struct {
 	OccuredAt time.Time `json:"occured_at"`
 }
 
-func (m Memory) String() string {
-	return fmt.Sprintf("%s: %s", m.OccuredAt, m.Content)
+type Memories []Memory
+
+func (ms Memories) String() string {
+	memories := make([]string, len(ms))
+	for _, m := range ms {
+		memory := fmt.Sprintf("【%s】%s", m.OccuredAt, m.Content)
+		memories = append(memories, memory)
+	}
+	return strings.Join(memories, ",")
 }
 
 func NewResident(name string, age int, gender Gender, traits []Trait) (*Resident, error) {
