@@ -19,23 +19,26 @@ import (
 // Injectors from wire.go:
 
 func initializeApp() (*App, error) {
-	llmProvider := llm.NewLLMGeminiProvider()
-	agentCommandCh := agent.NewAgentCommandCh()
 	configConfig, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
+	llmGeminiProvider, err := llm.NewLLMGeminiProvider(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	agentCommandCh := agent.NewAgentCommandCh()
 	filePaths, err := file.NewFilePaths(configConfig)
 	if err != nil {
 		return nil, err
 	}
 	fileResidentRepository := file.NewFileResidentRepository(filePaths)
-	toolKit := agents.AgentToolKit{
+	agentToolKit := agents.AgentToolKit{
 		ResidentRepository: fileResidentRepository,
 	}
-	runtime := agents.NewRuntime(llmProvider, agentCommandCh, toolKit)
+	runtime := agents.NewRuntime(llmGeminiProvider, agentCommandCh, agentToolKit)
 	agentCommandPublisher := agent.NewAgentCommandPublisher(agentCommandCh)
-	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmProvider, agentCommandPublisher)
+	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmGeminiProvider, agentCommandPublisher)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)
 	tuiTUI := tui.NewTUI(registerResident, sendMessageFromBuildingManagerToResident)
 	app := &App{
