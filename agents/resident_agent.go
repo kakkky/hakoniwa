@@ -5,28 +5,23 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kakkky/hakoniwa/domain"
 	llmresponse "github.com/kakkky/hakoniwa/schema/llm_response"
 )
 
-const maxMemoryInLLMContext = 50
-
 type residentAgent struct {
 	agentBase
-	resident   *domain.Resident
+	residentID domain.ResidentID
 	repository domain.ResidentRepository
 }
 
-func newResidentAgent(base agentBase, resident *domain.Resident) *residentAgent {
-	systemPromptTemplate := ``
-	systemPrompt := fmt.Sprintf(systemPromptTemplate)
-	base.llmPrompt.AddSystemPrompt(systemPrompt)
+func newResidentAgent(base agentBase, repo domain.ResidentRepository, residentID domain.ResidentID) *residentAgent {
 	return &residentAgent{
-		agentBase: base,
-		resident:  resident,
+		residentID: residentID,
+		agentBase:  base,
+		repository: repo,
 	}
 }
 
@@ -72,14 +67,30 @@ func (ra *residentAgent) run(ctx context.Context) error {
 }
 
 func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) error {
-	memories := ra.resident.Memories
-	if len(memories) > maxMemoryInLLMContext {
-		memories = memories[len(memories)-maxMemoryInLLMContext:]
+	resident, err := ra.repository.FindByID(ra.residentID)
+	if err != nil {
+		return err
 	}
-	var llmContext strings.Builder
-	for _, memory := range memories {
-		llmContext.WriteString(memory.String() + "\n")
-	}
+	name := resident.Name
+	age := resident.Age
+	gender := resident.Gender
+	traits := resident.Traits
+	systemPromptTemplate :=
+		`あなたはあるマンションの住民の一人です。
+		プロフィール：
+			- 名前：%s
+			- 性別：%s
+			- 年齢：%s
+			- 特徴：%s
+		あなたの記憶：
+			- %s
+		あなたの気分：
+			- %s
+		`
+	memories := resident.Memories
+	mood := resident.Mood
+	systemPrompt := fmt.Sprintf(systemPromptTemplate, name, gender, age, traits, memories, mood)
+	ra.agentBase.llmPrompt.AddSystemPrompt(systemPrompt)
 
 	switch eventV := event.(type) {
 	case domain.MessageEvent:
@@ -88,31 +99,29 @@ func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) e
 			Content:   newMemoryContent,
 			OccuredAt: time.Now(),
 		}
-		ra.resident.AddMemory(newMemory)
-		return ra.processMessageEvent(ctx, eventV, llmContext)
+		resident.AddMemory(newMemory)
+		return ra.processMessageEvent(ctx, eventV)
 	case domain.OpportunityEvent:
 		newMemoryContent := fmt.Sprintf(`%sに%s。`, eventV.EventFrom.Name, eventV.Opportunity)
 		newMemory := domain.Memory{
 			Content:   newMemoryContent,
 			OccuredAt: time.Now(),
 		}
-		ra.resident.AddMemory(newMemory)
-		return ra.processOppotunityeEvent(ctx, eventV, llmContext)
+		resident.AddMemory(newMemory)
+		return ra.processOppotunityeEvent(ctx, eventV)
+
 	}
+
+	defer ra.repository.Save(resident)
 
 	return nil
 }
 
-func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domain.MessageEvent, llmContext strings.Builder) error {
+func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domain.MessageEvent) error {
 	msg := msgEvent.Payload()
-
-	systemPromptTemplate := ``
-	systemPrompt := fmt.Sprintf(systemPromptTemplate, nil)
-	userPromptTemplate := ``
-
+	userPromptTemplate :=
+		``
 	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
-
-	ra.llmPrompt.AddSystemPrompt(systemPrompt)
 	ra.llmPrompt.AddUserPrompt(userPrompt)
 
 	rawResp, err := ra.llmProvider.Generate(ctx, ra.llmPrompt, llmresponse.ResidentAgentProcess)
@@ -130,10 +139,11 @@ func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domai
 	return nil
 }
 
-func (ra *residentAgent) processOppotunityeEvent(ctx context.Context, oppEvent domain.OpportunityEvent, llmContext strings.Builder) error {
+func (ra *residentAgent) processOppotunityeEvent(ctx context.Context, oppEvent domain.OpportunityEvent) error {
 	msg := oppEvent.Payload()
 
-	systemPromptTemplate := ``
+	systemPromptTemplate :=
+		``
 	systemPrompt := fmt.Sprintf(systemPromptTemplate, nil)
 	userPromptTemplate := ``
 
