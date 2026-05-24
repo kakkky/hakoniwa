@@ -30,7 +30,7 @@ func initializeApp() (*App, error) {
 		return nil, err
 	}
 	fileResidentRepository := file.NewFileResidentRepository(filePaths)
-	toolKit := agents.ToolKit{
+	toolKit := agents.AgentToolKit{
 		ResidentRepository: fileResidentRepository,
 	}
 	runtime := agents.NewRuntime(llmProvider, agentCommandCh, toolKit)

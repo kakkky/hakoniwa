@@ -12,7 +12,11 @@ type Runtime struct {
 	agentRunner       *agentRunner
 }
 
-func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentCommandCh, toolKit ToolKit) *Runtime {
+type AgentToolKit struct {
+	ResidentRepository domain.ResidentRepository
+}
+
+func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentCommandCh, toolKit AgentToolKit) *Runtime {
 	// EventBroker
 	eventBroker := newEventBroker()
 
