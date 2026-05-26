@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// presentation層追加後にUIを起動
-	// if err := application.UI.Run(ctx); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err := app.UI.Run(ctx); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/kakkky/hakoniwa/infrastructure/agent"
 	"github.com/kakkky/hakoniwa/infrastructure/file"
 	"github.com/kakkky/hakoniwa/infrastructure/llm"
-	"github.com/kakkky/hakoniwa/presentation/tui"
+	"github.com/kakkky/hakoniwa/presentation/ui"
 	"github.com/kakkky/hakoniwa/usecase"
 )
 
@@ -40,10 +40,10 @@ func initializeApp() (*App, error) {
 	agentCommandPublisher := agent.NewAgentCommandPublisher(agentCommandCh)
 	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmGeminiProvider, agentCommandPublisher)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)
-	tuiTUI := tui.NewTUI(registerResident, sendMessageFromBuildingManagerToResident)
+	uiUI := ui.NewUI(registerResident, sendMessageFromBuildingManagerToResident)
 	app := &App{
 		AgentRuntime: runtime,
-		UI:           tuiTUI,
+		UI:           uiUI,
 	}
 	return app, nil
 }
@@ -52,5 +52,5 @@ func initializeApp() (*App, error) {
 
 type App struct {
 	AgentRuntime *agents.Runtime
-	UI           *tui.TUI
+	UI           *ui.UI
 }

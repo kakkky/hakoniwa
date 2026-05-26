@@ -9,13 +9,13 @@ import (
 	"github.com/kakkky/hakoniwa/config"
 	"github.com/kakkky/hakoniwa/infrastructure"
 	"github.com/kakkky/hakoniwa/presentation"
-	"github.com/kakkky/hakoniwa/presentation/tui"
+	"github.com/kakkky/hakoniwa/presentation/ui"
 	"github.com/kakkky/hakoniwa/usecase"
 )
 
 type App struct {
 	AgentRuntime *agents.Runtime
-	UI           *tui.TUI
+	UI           *ui.UI
 }
 
 func initializeApp() (*App, error) {
