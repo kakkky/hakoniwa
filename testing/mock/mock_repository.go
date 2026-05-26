@@ -40,6 +40,21 @@ func (m *MockResidentRepository) EXPECT() *MockResidentRepositoryMockRecorder {
 	return m.recorder
 }
 
+// FindByID mocks base method.
+func (m *MockResidentRepository) FindByID(id domain.ResidentID) (*domain.Resident, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByID", id)
+	ret0, _ := ret[0].(*domain.Resident)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByID indicates an expected call of FindByID.
+func (mr *MockResidentRepositoryMockRecorder) FindByID(id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockResidentRepository)(nil).FindByID), id)
+}
+
 // GetAll mocks base method.
 func (m *MockResidentRepository) GetAll() ([]*domain.Resident, error) {
 	m.ctrl.T.Helper()
