@@ -8,7 +8,6 @@ type agentBase struct {
 	inbox       agentEventInbox
 	sendEvent   func(domain.Event)
 	llmProvider domain.LLMProvider
-	llmPrompt   *domain.LLMPrompts
 }
 
 func newAgentBase(
@@ -20,6 +19,5 @@ func newAgentBase(
 		inbox:       inbox,
 		sendEvent:   sendEvent,
 		llmProvider: llmProvider,
-		llmPrompt:   &domain.LLMPrompts{},
 	}
 }

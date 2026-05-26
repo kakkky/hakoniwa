@@ -28,21 +28,21 @@ func NewLLMGeminiProvider(cfg *config.Config) (*LLMGeminiProvider, error) {
 	}, nil
 }
 
-func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
+func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
 	if responseSchema == nil {
 		return nil, errors.New("schema is required")
 	}
 	gcc := &genai.GenerateContentConfig{
 		SystemInstruction: &genai.Content{
 			Parts: []*genai.Part{
-				{Text: prompts.System.String()},
+				{Text: prompts.System},
 			},
 		},
 		ResponseMIMEType:   "application/json",
 		ResponseJsonSchema: responseSchema,
 	}
 	contents := []*genai.Content{
-		genai.NewContentFromText(prompts.User.String(), genai.RoleUser),
+		genai.NewContentFromText(prompts.User, genai.RoleUser),
 	}
 	resp, err := p.client.Models.GenerateContent(ctx, model, contents, gcc)
 	if err != nil {

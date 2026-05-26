@@ -43,7 +43,7 @@ func (m *MockLLMProvider) EXPECT() *MockLLMProviderMockRecorder {
 }
 
 // Generate mocks base method.
-func (m *MockLLMProvider) Generate(ctx context.Context, prompts *domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
+func (m *MockLLMProvider) Generate(ctx context.Context, prompts domain.LLMPrompts, responseSchema json.RawMessage) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Generate", ctx, prompts, responseSchema)
 	ret0, _ := ret[0].(json.RawMessage)
