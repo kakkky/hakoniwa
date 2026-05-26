@@ -27,7 +27,7 @@ func NewRuntime(llmProvider domain.LLMProvider, agentCommandCh domain.AgentComma
 		newResidentAgent: func(resident *domain.Resident) *residentAgent {
 			return &residentAgent{
 				agentBase:  newAgentBase(sendEventFunc, llmProvider),
-				resident:   resident,
+				residentID: resident.ID,
 				repository: toolKit.ResidentRepository,
 			}
 		},

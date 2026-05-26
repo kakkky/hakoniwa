@@ -45,8 +45,10 @@ type residentAgentsState struct {
 	running map[domain.ResidentID]context.CancelFunc
 }
 
-type reconcileSignal struct{}
-type reconcileSignalCh chan reconcileSignal
+type (
+	reconcileSignal   struct{}
+	reconcileSignalCh chan reconcileSignal
+)
 
 func (ar *agentRunner) run(ctx context.Context) error {
 	gameMasterAgent := ar.factory.newGameMasterAgent()
@@ -66,13 +68,13 @@ func (r *agentRunner) reconcileResidentAgents(ctx context.Context) {
 	r.state.residentAgents.mu.Lock()
 	defer r.state.residentAgents.mu.Unlock()
 	for _, desired := range r.state.residentAgents.desired {
-		if _, alreadyRunning := r.state.residentAgents.running[desired.resident.ID]; alreadyRunning {
+		if _, alreadyRunning := r.state.residentAgents.running[desired.residentID]; alreadyRunning {
 			continue
 		}
 		agentCtx, cancelFn := context.WithCancel(ctx)
 
 		residentAgent := &desired
-		r.state.residentAgents.running[residentAgent.resident.ID] = cancelFn
+		r.state.residentAgents.running[residentAgent.residentID] = cancelFn
 
 		go residentAgent.run(agentCtx)
 	}

@@ -71,12 +71,15 @@ func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) e
 	if err != nil {
 		return err
 	}
+
 	name := resident.Name
 	age := resident.Age
 	gender := resident.Gender
 	traits := resident.Traits
-	systemPromptTemplate :=
-		`あなたはあるマンションの住民の一人です。
+	memories := resident.Memories
+	mood := resident.Mood
+
+	systemPromptTemplate := `あなたはあるマンションの住民の一人です。
 		プロフィール：
 			- 名前：%s
 			- 性別：%s
@@ -87,96 +90,55 @@ func (ra *residentAgent) processEvent(ctx context.Context, event domain.Event) e
 		あなたの気分：
 			- %s
 		`
-	memories := resident.Memories
-	mood := resident.Mood
 	systemPrompt := fmt.Sprintf(systemPromptTemplate, name, gender, age, traits, memories, mood)
-	ra.agentBase.llmPrompt.AddSystemPrompt(systemPrompt)
+
+	var userPrompt string
 
 	switch eventV := event.(type) {
 	case domain.MessageEvent:
-		newMemoryContent := fmt.Sprintf(`%sから「%s」とメッセージを受け取った。`, eventV.EventFrom.Name, eventV.Message)
-		newMemory := domain.Memory{
-			Content:   newMemoryContent,
+		m := domain.Memory{
+			Content:   fmt.Sprintf(`%sから「%s」とメッセージを受け取った。`, eventV.EventFrom.Name, eventV.Message),
 			OccuredAt: time.Now(),
 		}
-		resident.AddMemory(newMemory)
-		return ra.processMessageEvent(ctx, eventV)
-	case domain.OpportunityEvent:
-		newMemoryContent := fmt.Sprintf(`%sに%s。`, eventV.EventFrom.Name, eventV.Opportunity)
-		newMemory := domain.Memory{
-			Content:   newMemoryContent,
-			OccuredAt: time.Now(),
-		}
-		resident.AddMemory(newMemory)
-		return ra.processOppotunityeEvent(ctx, eventV)
+		resident.AddMemory(m)
 
+		userPrompt = fmt.Sprintf(``)
+	case domain.OpportunityEvent:
+		m := domain.Memory{
+			Content:   fmt.Sprintf(`%sに%s`, eventV.EventFrom.Name, eventV.Opportunity),
+			OccuredAt: time.Now(),
+		}
+		resident.AddMemory(m)
+
+		userPrompt = fmt.Sprintf(``)
 	}
 
-	defer ra.repository.Save(resident)
-
-	return nil
-}
-
-func (ra *residentAgent) processMessageEvent(ctx context.Context, msgEvent domain.MessageEvent) error {
-	msg := msgEvent.Payload()
-	userPromptTemplate :=
-		``
-	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
-	ra.llmPrompt.AddUserPrompt(userPrompt)
-
-	rawResp, err := ra.llmProvider.Generate(ctx, ra.llmPrompt, llmresponse.ResidentAgentProcess)
-	if err != nil {
-		return err
+	llmPrompts := domain.LLMPrompts{
+		System: systemPrompt,
+		User:   userPrompt,
 	}
 	var residentAgentProcessResponse residentAgentProcessResponse
+	rawResp, err := ra.llmProvider.Generate(ctx, llmPrompts, llmresponse.ResidentAgentProcess)
 	if err := json.Unmarshal(rawResp, &residentAgentProcessResponse); err != nil {
 		return nil
 	}
-	if err := ra.handleResidentLLMResponse(residentAgentProcessResponse); err != nil {
+	if err := ra.handleResidentLLMResponse(resident, residentAgentProcessResponse); err != nil {
+		return err
+	}
+
+	if err := ra.repository.Save(resident); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ra *residentAgent) processOppotunityeEvent(ctx context.Context, oppEvent domain.OpportunityEvent) error {
-	msg := oppEvent.Payload()
-
-	systemPromptTemplate :=
-		``
-	systemPrompt := fmt.Sprintf(systemPromptTemplate, nil)
-	userPromptTemplate := ``
-
-	userPrompt := fmt.Sprintf(userPromptTemplate, msg)
-
-	ra.llmPrompt.AddSystemPrompt(systemPrompt)
-	ra.llmPrompt.AddUserPrompt(userPrompt)
-
-	rawResp, err := ra.llmProvider.Generate(ctx, ra.llmPrompt, llmresponse.ResidentAgentProcess)
-	if err != nil {
-		return err
-	}
-	var residentAgentProcessResponse residentAgentProcessResponse
-	if err := json.Unmarshal(rawResp, &residentAgentProcessResponse); err != nil {
-		return err
-	}
-	if err := ra.handleResidentLLMResponse(residentAgentProcessResponse); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessResponse) error {
-
+func (ra *residentAgent) handleResidentLLMResponse(resident *domain.Resident, res residentAgentProcessResponse) error {
 	toolUse := res.ToolUse
 	if toolUse != nil {
 		switch {
 		case toolUse.UpdateMood != nil:
-			ra.resident.UpdateMood(toolUse.UpdateMood.Mood)
-			if err := ra.repository.Save(ra.resident); err != nil {
-				return err
-			}
+			resident.UpdateMood(toolUse.UpdateMood.Mood)
 		}
 	}
 
@@ -190,8 +152,8 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessRespo
 					Name: res.To.Name,
 				},
 				EventFrom: domain.EventFrom{
-					ID:   domain.ActorID(ra.resident.ID),
-					Name: domain.ActorName(ra.resident.Name),
+					ID:   domain.ActorID(resident.ID),
+					Name: domain.ActorName(resident.Name),
 				},
 			},
 			Message: res.Payload,
@@ -201,7 +163,7 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessRespo
 			Content:   newMemoryContent,
 			OccuredAt: time.Now(),
 		}
-		ra.resident.AddMemory(newMemory)
+		resident.AddMemory(newMemory)
 	case residentActionOpportunity:
 		ra.sendEvent(domain.OpportunityEvent{
 			EventBase: domain.EventBase{
@@ -210,8 +172,8 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessRespo
 					Name: res.To.Name,
 				},
 				EventFrom: domain.EventFrom{
-					ID:   domain.ActorID(ra.resident.ID),
-					Name: domain.ActorName(ra.resident.Name),
+					ID:   domain.ActorID(resident.ID),
+					Name: domain.ActorName(resident.Name),
 				},
 			},
 			Opportunity: res.Payload,
@@ -221,7 +183,7 @@ func (ra *residentAgent) handleResidentLLMResponse(res residentAgentProcessRespo
 			Content:   newMemoryContent,
 			OccuredAt: time.Now(),
 		}
-		ra.resident.AddMemory(newMemory)
+		resident.AddMemory(newMemory)
 	case residentActionStay:
 	}
 	return nil
