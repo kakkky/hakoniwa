@@ -13,5 +13,5 @@ type ResidentRepository interface {
 
 type BuildingManagerRepository interface {
 	Save(BuildingManager *BuildingManager) error
-	Get() (BuildingManager, error)
+	Get() (*BuildingManager, error)
 }

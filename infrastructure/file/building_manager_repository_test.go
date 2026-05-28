@@ -143,7 +143,7 @@ func TestFileBuildingManagerRepository_Get_Error(t *testing.T) {
 				// NewFilePaths が作成したファイルは空のままなのでそのまま使う
 				return paths
 			},
-			wantErrIs: file.ErrBuildingManagerNotFound,
+			wantErrIs: domain.NotfoundErr,
 		},
 		{
 			name: "ファイルが存在しないと ReadFile でエラー",
