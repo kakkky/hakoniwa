@@ -12,33 +12,35 @@ type UI struct {
 	fyneApp    fyne.App
 	fyneWindow fyne.Window
 
-	registerResident *usecase.RegisterResident
-	sendMessage      *usecase.SendMessageFromBuildingManagerToResident
+	topBarContent        *fyne.Container
+	residentBoardContent *fyne.Container
+	activityBoardContent *fyne.Container
+
+	usecases *usecase.Usecases
 }
 
-func NewUI(
-	registerResident *usecase.RegisterResident,
-	sendMessage *usecase.SendMessageFromBuildingManagerToResident,
-) *UI {
+func NewUI(usecases *usecase.Usecases) *UI {
 	fyneApp := app.New()
 	fyneApp.Settings().SetTheme(newHakoniwaTheme())
 	fyneWindow := fyneApp.NewWindow("hakoniwa")
 	fyneWindow.Resize(fyne.NewSize(900, 600))
 
 	return &UI{
-		fyneApp:          fyneApp,
-		fyneWindow:       fyneWindow,
-		registerResident: registerResident,
-		sendMessage:      sendMessage,
+		fyneApp:    fyneApp,
+		fyneWindow: fyneWindow,
+		usecases:   usecases,
 	}
 }
 
 func (u *UI) Run(ctx context.Context) error {
+	u.topBarContent = u.topBar(ctx)
+	u.residentBoardContent = u.residentBoard()
+	u.activityBoardContent = u.activityBoard()
 	layout := layoutContainer(
-		u.topBar(),
+		u.topBarContent,
 		nil,
-		u.residentBoard(),
-		u.activityBoard(),
+		u.residentBoardContent,
+		u.activityBoardContent,
 	)
 
 	u.fyneWindow.SetContent(layout)
