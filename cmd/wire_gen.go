@@ -39,8 +39,17 @@ func initializeApp() (*App, error) {
 	runtime := agents.NewRuntime(llmGeminiProvider, agentCommandCh, agentToolKit)
 	agentCommandPublisher := agent.NewAgentCommandPublisher(agentCommandCh)
 	registerResident := usecase.NewRegisterResident(fileResidentRepository, llmGeminiProvider, agentCommandPublisher)
+	fileBuildingManagerRepository := file.NewFileBuildingManagerRepository(filePaths)
+	registerBuildingManager := usecase.NewRegisterBuildingManager(fileBuildingManagerRepository)
+	getBuildingManager := usecase.NewGetBuildingManager(fileBuildingManagerRepository)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)
-	uiUI := ui.NewUI(registerResident, sendMessageFromBuildingManagerToResident)
+	usecases := &usecase.Usecases{
+		RegisterResident:        registerResident,
+		RegisterBuildingManager: registerBuildingManager,
+		GetBuildingManager:      getBuildingManager,
+		SendMessage:             sendMessageFromBuildingManagerToResident,
+	}
+	uiUI := ui.NewUI(usecases)
 	app := &App{
 		AgentRuntime: runtime,
 		UI:           uiUI,
