@@ -9,5 +9,8 @@ import (
 
 var Set = wire.NewSet(
 	NewRegisterResident,
+	NewRegisterBuildingManager,
+	NewGetBuildingManager,
 	NewSendMessageFromBuildingManagerToResident,
+	wire.Struct(new(Usecases), "*"),
 )
