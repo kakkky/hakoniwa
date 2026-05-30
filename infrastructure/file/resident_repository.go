@@ -28,8 +28,10 @@ func (repo *FileResidentRepository) Save(resident *domain.Resident) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, &residents); err != nil {
-		return err
+	if len(data) > 0 {
+		if err := json.Unmarshal(data, &residents); err != nil {
+			return err
+		}
 	}
 	residentsMap := make(map[domain.ResidentID]*domain.Resident, len(residents))
 	for _, r := range residents {
