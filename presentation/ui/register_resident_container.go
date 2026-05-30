@@ -3,13 +3,17 @@ package ui
 import (
 	"context"
 	"errors"
+	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/kakkky/hakoniwa/domain"
@@ -53,9 +57,8 @@ func (u *UI) registerResidentForm(ctx context.Context, navigate func(fyne.Canvas
 	}
 	personalityEntry.PlaceHolder = "性格や特徴を自由に設定してください(100文字以内)"
 
-	var loading *widget.Activity
 	onSubmitted := func() {
-		navigate(components.LoadingContainer(loading))
+		navigate(components.LoadingContainer())
 
 		fyne.Do(func() {
 			age, err := strconv.Atoi(ageEntry.Text)
@@ -72,11 +75,11 @@ func (u *UI) registerResidentForm(ctx context.Context, navigate func(fyne.Canvas
 				gender = domain.Unspecified
 			}
 
-			err = u.usecases.RegisterResident.Exec(ctx, nameEntry.Text, age, gender, personalityEntry.Text)
+			resident, err := u.usecases.RegisterResident.Exec(ctx, nameEntry.Text, age, gender, personalityEntry.Text)
 			if err != nil {
 				log.Println(err)
 			}
-			navigate(u.registerResidentResult(ctx, navigate, onClose))
+			navigate(u.registerResidentResult(ctx, resident, navigate, onClose))
 		})
 	}
 
@@ -85,7 +88,7 @@ func (u *UI) registerResidentForm(ctx context.Context, navigate func(fyne.Canvas
 		container.NewCenter(
 			container.NewGridWithColumns(2,
 				widget.NewButton("やめる", onClose),
-				widget.NewButtonWithIcon("登録する", theme.ConfirmIcon(), onSubmitted),
+				widget.NewButtonWithIcon("登録", theme.ConfirmIcon(), onSubmitted),
 			),
 		),
 		nil, nil,
@@ -98,17 +101,32 @@ func (u *UI) registerResidentForm(ctx context.Context, navigate func(fyne.Canvas
 	)
 }
 
-func (u *UI) registerResidentResult(ctx context.Context, navigate func(fyne.CanvasObject), onClose func()) *fyne.Container {
+func (u *UI) registerResidentResult(ctx context.Context, result *domain.Resident, navigate func(fyne.CanvasObject), onClose func()) *fyne.Container {
+
+	traits := make([]fyne.CanvasObject, 0, len(result.Traits))
+	for _, t := range result.Traits {
+		traitText := canvas.NewText(string(t), color.NRGBA{R: 64, G: 64, B: 64, A: 255})
+		traitText.TextStyle.Underline = true
+		traitText.TextStyle.Bold = true
+		traitText.TextStyle.Italic = true
+
+		traits = append(traits, traitText)
+	}
+
 	return container.NewBorder(
-		widget.NewLabelWithStyle("住人が登録されました", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("住人として登録されました", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		container.NewCenter(
 			container.NewGridWithColumns(2,
-				widget.NewButton("終了する", onClose),
-				components.NewNavigateNextButton("続けて登録する", func() { navigate(u.registerResidentResult(ctx, navigate, onClose)) }),
+				widget.NewButton("終了", onClose),
+				components.NewNavigateNextButton("続けて登録", func() { navigate(u.registerResidentForm(ctx, navigate, onClose)) }),
 			),
 		),
 		nil,
 		nil,
-		container.NewVBox(),
+		container.NewBorder(
+			container.NewCenter(widget.NewLabel(fmt.Sprintf("%s には、以下の個性が設定されました！", result.Name))),
+			layout.NewSpacer(), nil, nil,
+			container.NewCenter(container.NewVBox(traits...)),
+		),
 	)
 }

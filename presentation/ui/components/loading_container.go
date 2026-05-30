@@ -6,12 +6,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func LoadingContainer(loading *widget.Activity) *fyne.Container {
-	loading = widget.NewActivity()
+func LoadingContainer() *fyne.Container {
+	loading := widget.NewActivity()
 	loading.Start()
 	return container.NewCenter(
 		container.NewHBox(
-			loading,
+			container.NewGridWrap(fyne.NewSize(32, 32), loading),
 			widget.NewLabel("処理中です..."),
 		),
 	)
