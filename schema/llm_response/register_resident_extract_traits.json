@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "traits": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["traits"]
+}
