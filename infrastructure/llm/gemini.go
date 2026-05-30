@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/kakkky/hakoniwa/config"
 	"github.com/kakkky/hakoniwa/domain"
@@ -32,18 +33,23 @@ func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts domain.LLMProm
 	if responseSchema == nil {
 		return nil, errors.New("schema is required")
 	}
-	gcc := &genai.GenerateContentConfig{
-		SystemInstruction: &genai.Content{
+	var systemInstruction *genai.Content
+	if prompts.System != "" {
+		systemInstruction = &genai.Content{
 			Parts: []*genai.Part{
 				{Text: prompts.System},
 			},
-		},
+		}
+	}
+	gcc := &genai.GenerateContentConfig{
+		SystemInstruction:  systemInstruction,
 		ResponseMIMEType:   "application/json",
 		ResponseJsonSchema: responseSchema,
 	}
 	contents := []*genai.Content{
 		genai.NewContentFromText(prompts.User, genai.RoleUser),
 	}
+	time.Sleep(1 * time.Second)
 	resp, err := p.client.Models.GenerateContent(ctx, model, contents, gcc)
 	if err != nil {
 		return nil, err
