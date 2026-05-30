@@ -33,7 +33,7 @@ type registerResidentExtractTraitsResponse struct {
 }
 
 func (r *RegisterResident) Exec(ctx context.Context, name string, age int, gender domain.Gender, personalityDescription string) error {
-	userPromptTemplate := `以下の文章はある人の性格を表した文章です。その文章をいくつかの特徴(traits)に落とし込んでください
+	userPromptTemplate := `以下の文章はある人の性格を表した文章です。その文章をいくつかの特徴(traits)に落とし込んでください。必ず日本語にしてください。
 		文章：%s
 		`
 
