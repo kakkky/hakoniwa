@@ -16,6 +16,11 @@ type agentRunner struct {
 func newAgentRunner() *agentRunner {
 	return &agentRunner{
 		signalCh: make(reconcileSignalCh, 16),
+		state: agentState{
+			residentAgents: residentAgentsState{
+				running: make(map[domain.ResidentID]context.CancelFunc),
+			},
+		},
 	}
 }
 
