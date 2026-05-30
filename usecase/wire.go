@@ -11,6 +11,7 @@ var Set = wire.NewSet(
 	NewRegisterResident,
 	NewRegisterBuildingManager,
 	NewGetBuildingManager,
+	NewUpdateBuildingManager,
 	NewSendMessageFromBuildingManagerToResident,
 	wire.Struct(new(Usecases), "*"),
 )

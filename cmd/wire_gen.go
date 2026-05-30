@@ -42,11 +42,13 @@ func initializeApp() (*App, error) {
 	fileBuildingManagerRepository := file.NewFileBuildingManagerRepository(filePaths)
 	registerBuildingManager := usecase.NewRegisterBuildingManager(fileBuildingManagerRepository)
 	getBuildingManager := usecase.NewGetBuildingManager(fileBuildingManagerRepository)
+	updateBuildingManager := usecase.NewUpdateBuildingManager(fileBuildingManagerRepository)
 	sendMessageFromBuildingManagerToResident := usecase.NewSendMessageFromBuildingManagerToResident(agentCommandPublisher)
 	usecases := &usecase.Usecases{
 		RegisterResident:        registerResident,
 		RegisterBuildingManager: registerBuildingManager,
 		GetBuildingManager:      getBuildingManager,
+		UpdateBuildingManager:   updateBuildingManager,
 		SendMessage:             sendMessageFromBuildingManagerToResident,
 	}
 	uiUI := ui.NewUI(usecases)
