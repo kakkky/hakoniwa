@@ -58,7 +58,7 @@ func TestRegisterResident_Exec(t *testing.T) {
 			tt.setupMock(llm, repo, pub, tt.inputName, tt.inputAge, tt.inputGen)
 
 			uc := usecase.NewRegisterResident(repo, llm, pub)
-			if err := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "穏やかで几帳面"); err != nil {
+			if err, _ := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "穏やかで几帳面"); err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 		})
@@ -146,7 +146,7 @@ func TestRegisterResident_Exec_Error(t *testing.T) {
 			tt.setupMock(llm, repo, pub)
 
 			uc := usecase.NewRegisterResident(repo, llm, pub)
-			err := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "personality")
+			_, err := uc.Exec(context.Background(), tt.inputName, tt.inputAge, tt.inputGen, "personality")
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
