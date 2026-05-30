@@ -46,7 +46,7 @@ type Trait string
 type Traits []Trait
 
 func (ts Traits) String() string {
-	traits := make([]string, len(ts))
+	traits := make([]string, 0, len(ts))
 	for _, t := range ts {
 		traits = append(traits, string(t))
 	}
