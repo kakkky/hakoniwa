@@ -9,8 +9,8 @@ import (
 )
 
 type UI struct {
-	fyneApp    fyne.App
-	fyneWindow fyne.Window
+	fyneApp        fyne.App
+	fyneMainWindow fyne.Window
 
 	topBarContent        *fyne.Container
 	residentBoardContent *fyne.Container
@@ -26,9 +26,9 @@ func NewUI(usecases *usecase.Usecases) *UI {
 	fyneWindow.Resize(fyne.NewSize(900, 600))
 
 	return &UI{
-		fyneApp:    fyneApp,
-		fyneWindow: fyneWindow,
-		usecases:   usecases,
+		fyneApp:        fyneApp,
+		fyneMainWindow: fyneWindow,
+		usecases:       usecases,
 	}
 }
 
@@ -43,7 +43,7 @@ func (u *UI) Run(ctx context.Context) error {
 		u.activityBoardContent,
 	)
 
-	u.fyneWindow.SetContent(layout)
-	u.fyneWindow.ShowAndRun()
+	u.fyneMainWindow.SetContent(layout)
+	u.fyneMainWindow.ShowAndRun()
 	return nil
 }
