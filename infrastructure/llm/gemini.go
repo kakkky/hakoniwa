@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/kakkky/hakoniwa/config"
 	"github.com/kakkky/hakoniwa/domain"
@@ -49,7 +48,6 @@ func (p *LLMGeminiProvider) Generate(ctx context.Context, prompts domain.LLMProm
 	contents := []*genai.Content{
 		genai.NewContentFromText(prompts.User, genai.RoleUser),
 	}
-	time.Sleep(1 * time.Second)
 	resp, err := p.client.Models.GenerateContent(ctx, model, contents, gcc)
 	if err != nil {
 		return nil, err
